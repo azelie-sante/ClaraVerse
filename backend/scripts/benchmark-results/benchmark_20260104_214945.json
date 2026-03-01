@@ -1,0 +1,92 @@
+{
+  "timestamp": "20260104_214945",
+  "total_tests": 6,
+  "average_score": 0.0,
+  "average_time": 63.989379485448204,
+  "categories": {
+    "simple": {
+      "category_name": "Simple Workflows (1-2 blocks)",
+      "results": [
+        {
+          "name": "Single Search",
+          "prompt": "Create a workflow that searches for AI news",
+          "complexity": 1,
+          "generation_time": 26.53954315185547,
+          "score": 0,
+          "metrics": {},
+          "issues": []
+        }
+      ]
+    },
+    "moderate": {
+      "category_name": "Moderate Workflows (3-5 blocks)",
+      "results": [
+        {
+          "name": "Search and Summarize",
+          "prompt": "Search for AI news, extract the top 3 articles with titles and URLs, then write a summary",
+          "complexity": 2,
+          "generation_time": 49.506218910217285,
+          "score": 0,
+          "metrics": {},
+          "issues": []
+        }
+      ]
+    },
+    "complex": {
+      "category_name": "Complex Workflows (6-10 blocks)",
+      "results": [
+        {
+          "name": "Research & Report Generator",
+          "prompt": "Create a comprehensive research workflow: 1) Search for AI breakthroughs in 2026, 2) Extract key findings with sources, 3) Search for expert opinions, 4) Combine all data into structured format, 5) Generate executive summary, 6) Create detailed report",
+          "complexity": 3,
+          "generation_time": 97.73626708984375,
+          "score": 0,
+          "metrics": {},
+          "issues": []
+        }
+      ]
+    },
+    "edge_cases": {
+      "category_name": "Edge Cases & Schema Challenges",
+      "results": [
+        {
+          "name": "Array Root Schema",
+          "prompt": "Return a simple array of product IDs directly, not wrapped in an object",
+          "complexity": 2,
+          "generation_time": 14.067875862121582,
+          "score": 0,
+          "metrics": {},
+          "issues": []
+        }
+      ]
+    },
+    "performance": {
+      "category_name": "Performance & Scale Tests",
+      "results": [
+        {
+          "name": "10-Block Chain",
+          "prompt": "Create a 10-step workflow: 1) search topic A, 2) extract data from A, 3) search topic B, 4) extract data from B, 5) search topic C, 6) extract data from C, 7) merge A+B, 8) merge result with C, 9) analyze trends, 10) generate final report",
+          "complexity": 4,
+          "generation_time": 120.00195145606995,
+          "score": 0,
+          "metrics": {},
+          "issues": []
+        }
+      ]
+    },
+    "real_world": {
+      "category_name": "Real-World Use Cases",
+      "results": [
+        {
+          "name": "Content Curation Bot",
+          "prompt": "Build a content curation bot that searches for AI/ML articles, filters by quality indicators (source credibility, engagement), extracts key points, generates summaries, categorizes by topic, and creates a newsletter format",
+          "complexity": 3,
+          "generation_time": 76.08442044258118,
+          "score": 0,
+          "metrics": {},
+          "issues": []
+        }
+      ]
+    }
+  }
+}

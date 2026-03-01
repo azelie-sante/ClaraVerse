@@ -1,0 +1,323 @@
+{
+  "timestamp": "20260104_221851",
+  "total_tests": 19,
+  "average_score": 88.6842105263158,
+  "average_time": 48.787196799328456,
+  "categories": {
+    "simple": {
+      "category_name": "Simple Workflows (1-2 blocks)",
+      "results": [
+        {
+          "name": "Single Search",
+          "prompt": "Create a workflow that searches for AI news",
+          "complexity": 1,
+          "generation_time": 13.661572694778442,
+          "score": 100,
+          "metrics": {
+            "total_blocks": 2,
+            "llm_blocks": 1,
+            "variable_blocks": 1,
+            "structured_blocks": 1,
+            "connections": 1
+          },
+          "issues": []
+        },
+        {
+          "name": "Text Generation",
+          "prompt": "Write a blog post about renewable energy",
+          "complexity": 1,
+          "generation_time": 13.551557302474976,
+          "score": 100,
+          "metrics": {
+            "total_blocks": 2,
+            "llm_blocks": 1,
+            "variable_blocks": 1,
+            "structured_blocks": 0,
+            "connections": 1
+          },
+          "issues": []
+        }
+      ]
+    },
+    "moderate": {
+      "category_name": "Moderate Workflows (3-5 blocks)",
+      "results": [
+        {
+          "name": "Search and Summarize",
+          "prompt": "Search for AI news, extract the top 3 articles with titles and URLs, then write a summary",
+          "complexity": 2,
+          "generation_time": 44.385926961898804,
+          "score": 95,
+          "metrics": {
+            "total_blocks": 3,
+            "llm_blocks": 2,
+            "variable_blocks": 1,
+            "structured_blocks": 1,
+            "connections": 2
+          },
+          "issues": []
+        },
+        {
+          "name": "Data Extraction Pipeline",
+          "prompt": "Search for Python tutorials, extract titles, URLs, and difficulty levels, then filter only beginner tutorials",
+          "complexity": 2,
+          "generation_time": 23.801880836486816,
+          "score": 95,
+          "metrics": {
+            "total_blocks": 3,
+            "llm_blocks": 2,
+            "variable_blocks": 1,
+            "structured_blocks": 2,
+            "connections": 2
+          },
+          "issues": []
+        },
+        {
+          "name": "Multi-Tool Workflow",
+          "prompt": "Get current time, search for today's tech news, and extract article summaries with timestamps",
+          "complexity": 2,
+          "generation_time": 32.1975839138031,
+          "score": 95,
+          "metrics": {
+            "total_blocks": 2,
+            "llm_blocks": 1,
+            "variable_blocks": 1,
+            "structured_blocks": 1,
+            "connections": 1
+          },
+          "issues": []
+        }
+      ]
+    },
+    "complex": {
+      "category_name": "Complex Workflows (6-10 blocks)",
+      "results": [
+        {
+          "name": "Research & Report Generator",
+          "prompt": "Create a comprehensive research workflow: 1) Search for AI breakthroughs in 2026, 2) Extract key findings with sources, 3) Search for expert opinions, 4) Combine all data into structured format, 5) Generate executive summary, 6) Create detailed report",
+          "complexity": 3,
+          "generation_time": 58.925729751586914,
+          "score": 80,
+          "metrics": {
+            "total_blocks": 7,
+            "llm_blocks": 6,
+            "variable_blocks": 1,
+            "structured_blocks": 6,
+            "connections": 9
+          },
+          "issues": []
+        },
+        {
+          "name": "Multi-Source Aggregator",
+          "prompt": "Build a news aggregator that: searches GitHub for trending repos, searches web for tech news, searches for AI research papers, extracts structured data from each source, combines all results, ranks by relevance, and generates a daily digest",
+          "complexity": 3,
+          "generation_time": 63.127920150756836,
+          "score": 70,
+          "metrics": {
+            "total_blocks": 7,
+            "llm_blocks": 6,
+            "variable_blocks": 1,
+            "structured_blocks": 6,
+            "connections": 8
+          },
+          "issues": []
+        },
+        {
+          "name": "Conditional Branching",
+          "prompt": "Create a weather alert system: get current weather, check if temperature is above 30C OR if it's raining, if hot then search for heat safety tips, if raining then search for indoor activities, combine results and send summary",
+          "complexity": 3,
+          "generation_time": 26.460970163345337,
+          "score": 80,
+          "metrics": {
+            "total_blocks": 3,
+            "llm_blocks": 2,
+            "variable_blocks": 1,
+            "structured_blocks": 1,
+            "connections": 2
+          },
+          "issues": []
+        }
+      ]
+    },
+    "edge_cases": {
+      "category_name": "Edge Cases & Schema Challenges",
+      "results": [
+        {
+          "name": "Array Root Schema",
+          "prompt": "Return a simple array of product IDs directly, not wrapped in an object",
+          "complexity": 2,
+          "generation_time": 30.86864137649536,
+          "score": 100,
+          "metrics": {
+            "total_blocks": 2,
+            "llm_blocks": 1,
+            "variable_blocks": 1,
+            "structured_blocks": 1,
+            "connections": 1
+          },
+          "issues": []
+        },
+        {
+          "name": "Nested Arrays",
+          "prompt": "Search for restaurants and return a list where each restaurant has an array of reviews, each review has an array of tags",
+          "complexity": 2,
+          "generation_time": 26.2602481842041,
+          "score": 95,
+          "metrics": {
+            "total_blocks": 2,
+            "llm_blocks": 1,
+            "variable_blocks": 1,
+            "structured_blocks": 1,
+            "connections": 1
+          },
+          "issues": []
+        },
+        {
+          "name": "Mixed Data Types",
+          "prompt": "Create a workflow that returns structured data with strings, numbers, booleans, arrays, and nested objects for a product catalog",
+          "complexity": 2,
+          "generation_time": 50.524274587631226,
+          "score": 95,
+          "metrics": {
+            "total_blocks": 2,
+            "llm_blocks": 1,
+            "variable_blocks": 1,
+            "structured_blocks": 1,
+            "connections": 1
+          },
+          "issues": []
+        },
+        {
+          "name": "Large Schema",
+          "prompt": "Extract detailed user profiles with 15+ fields including: name, email, age, address (street, city, state, zip), preferences (array), social media links (object), purchase history (array of objects with date, amount, items), subscription status (boolean), and account metadata",
+          "complexity": 2,
+          "generation_time": 30.766174793243408,
+          "score": 95,
+          "metrics": {
+            "total_blocks": 2,
+            "llm_blocks": 1,
+            "variable_blocks": 1,
+            "structured_blocks": 1,
+            "connections": 1
+          },
+          "issues": []
+        },
+        {
+          "name": "Multiple Structured Outputs",
+          "prompt": "Search for tech companies, extract structured company data (name, founded, employees), then for each company search for recent news and extract structured article data (title, date, summary), then aggregate everything",
+          "complexity": 3,
+          "generation_time": 82.98314547538757,
+          "score": 95,
+          "metrics": {
+            "total_blocks": 4,
+            "llm_blocks": 3,
+            "variable_blocks": 1,
+            "structured_blocks": 3,
+            "connections": 3
+          },
+          "issues": []
+        }
+      ]
+    },
+    "performance": {
+      "category_name": "Performance & Scale Tests",
+      "results": [
+        {
+          "name": "10-Block Chain",
+          "prompt": "Create a 10-step workflow: 1) search topic A, 2) extract data from A, 3) search topic B, 4) extract data from B, 5) search topic C, 6) extract data from C, 7) merge A+B, 8) merge result with C, 9) analyze trends, 10) generate final report",
+          "complexity": 4,
+          "generation_time": 73.26962113380432,
+          "score": 70,
+          "metrics": {
+            "total_blocks": 2,
+            "llm_blocks": 0,
+            "variable_blocks": 2,
+            "structured_blocks": 0,
+            "connections": 9
+          },
+          "issues": []
+        },
+        {
+          "name": "Parallel Processing",
+          "prompt": "Create parallel workflows that simultaneously: search news, search GitHub, search YouTube, search Twitter, search Reddit, then combine all results",
+          "complexity": 3,
+          "generation_time": 51.141451597213745,
+          "score": 100,
+          "metrics": {
+            "total_blocks": 7,
+            "llm_blocks": 6,
+            "variable_blocks": 1,
+            "structured_blocks": 5,
+            "connections": 10
+          },
+          "issues": []
+        }
+      ]
+    },
+    "real_world": {
+      "category_name": "Real-World Use Cases",
+      "results": [
+        {
+          "name": "Content Curation Bot",
+          "prompt": "Build a content curation bot that searches for AI/ML articles, filters by quality indicators (source credibility, engagement), extracts key points, generates summaries, categorizes by topic, and creates a newsletter format",
+          "complexity": 3,
+          "generation_time": 72.95284414291382,
+          "score": 80,
+          "metrics": {
+            "total_blocks": 5,
+            "llm_blocks": 4,
+            "variable_blocks": 1,
+            "structured_blocks": 4,
+            "connections": 4
+          },
+          "issues": []
+        },
+        {
+          "name": "Market Research Tool",
+          "prompt": "Create a market research workflow: search for competitor products, extract pricing and features, search for customer reviews, analyze sentiment, compare with our product, identify gaps, generate competitive analysis report",
+          "complexity": 3,
+          "generation_time": 97.43221592903137,
+          "score": 80,
+          "metrics": {
+            "total_blocks": 8,
+            "llm_blocks": 7,
+            "variable_blocks": 1,
+            "structured_blocks": 7,
+            "connections": 10
+          },
+          "issues": []
+        },
+        {
+          "name": "Automated Report Generator",
+          "prompt": "Build an automated weekly report: get current date, search for industry news from past 7 days, extract key events with dates, search for market data, calculate trends, generate charts description, write executive summary, compile full report with sections",
+          "complexity": 3,
+          "generation_time": 79.91517162322998,
+          "score": 80,
+          "metrics": {
+            "total_blocks": 7,
+            "llm_blocks": 6,
+            "variable_blocks": 1,
+            "structured_blocks": 4,
+            "connections": 7
+          },
+          "issues": []
+        },
+        {
+          "name": "E-commerce Analytics",
+          "prompt": "Create product analytics workflow: search for product reviews, extract ratings and feedback, calculate average rating, identify common complaints, search for competitor products, compare features and prices, generate improvement recommendations",
+          "complexity": 3,
+          "generation_time": 54.72980856895447,
+          "score": 80,
+          "metrics": {
+            "total_blocks": 6,
+            "llm_blocks": 5,
+            "variable_blocks": 1,
+            "structured_blocks": 5,
+            "connections": 7
+          },
+          "issues": []
+        }
+      ]
+    }
+  }
+}

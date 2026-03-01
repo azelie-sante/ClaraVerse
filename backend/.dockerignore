@@ -1,0 +1,69 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+docs/
+README.md
+
+# Environment files (will be mounted at runtime)
+.env
+.env.local
+.env.*.local
+
+# Database files (will be in persistent volumes)
+*.db
+*.db-shm
+*.db-wal
+
+# Secure files (not for container)
+secure_files/
+
+# Generated files (runtime artifacts)
+generated/
+
+# Provider configuration (will be mounted at runtime)
+providers.json
+
+# Uploads directory (will be in persistent volumes)
+uploads/
+*.tmp
+
+# Logs
+*.log
+logs/
+
+# Build artifacts
+claraverse
+*.exe
+*.exe~
+*.so
+*.dylib
+dist/
+build/
+
+# MCP bridge builds (separate binary)
+mcp-bridge/mcp-client
+mcp-bridge/mcp-client.exe
+mcp-bridge/*.exe~
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+*_test.go
+test/
+coverage.txt
+*.out
+
+# Temporary files
+tmp/
+temp/
+*.tmp

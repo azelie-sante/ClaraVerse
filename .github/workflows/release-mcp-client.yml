@@ -1,0 +1,141 @@
+name: Release MCP Client
+
+on:
+  push:
+    tags:
+      - 'mcp-v*'  # Trigger on tags like mcp-v1.0.0
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: backend/mcp-bridge/go.sum
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/mcp-v}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
+
+      - name: Build binaries
+        working-directory: backend/mcp-bridge
+        run: |
+          echo "Building MCP Client v${{ steps.version.outputs.version }}..."
+
+          mkdir -p bin
+
+          # Windows
+          echo "Building for Windows (amd64)..."
+          GOOS=windows GOARCH=amd64 go build -ldflags="-X main.version=${{ steps.version.outputs.version }}" -o bin/mcp-client-windows-amd64.exe ./cmd/mcp-client
+
+          # Linux
+          echo "Building for Linux (amd64)..."
+          GOOS=linux GOARCH=amd64 go build -ldflags="-X main.version=${{ steps.version.outputs.version }}" -o bin/mcp-client-linux-amd64 ./cmd/mcp-client
+
+          # macOS Intel
+          echo "Building for macOS (amd64)..."
+          GOOS=darwin GOARCH=amd64 go build -ldflags="-X main.version=${{ steps.version.outputs.version }}" -o bin/mcp-client-darwin-amd64 ./cmd/mcp-client
+
+          # macOS Apple Silicon
+          echo "Building for macOS (arm64)..."
+          GOOS=darwin GOARCH=arm64 go build -ldflags="-X main.version=${{ steps.version.outputs.version }}" -o bin/mcp-client-darwin-arm64 ./cmd/mcp-client
+
+          echo "Builds complete!"
+          ls -la bin/
+
+      - name: Generate checksums
+        working-directory: backend/mcp-bridge/bin
+        run: |
+          echo "Generating checksums..."
+          sha256sum mcp-client-* > checksums.txt
+          echo "Checksums:"
+          cat checksums.txt
+
+      - name: Copy installer scripts
+        working-directory: backend/mcp-bridge
+        run: |
+          cp scripts/install.sh bin/
+          cp scripts/install.ps1 bin/
+          chmod +x bin/install.sh
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: mcp-v${{ steps.version.outputs.version }}
+          name: MCP Client v${{ steps.version.outputs.version }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          body: |
+            ## Installation
+
+            ### macOS / Linux
+            ```bash
+            curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/backend/mcp-bridge/scripts/install.sh | sh
+            ```
+
+            ### Windows (PowerShell)
+            ```powershell
+            irm https://raw.githubusercontent.com/${{ github.repository }}/main/backend/mcp-bridge/scripts/install.ps1 | iex
+            ```
+
+            ### Manual Download
+            Download the appropriate binary for your platform from the assets below.
+
+            ## Checksums
+            See `checksums.txt` for SHA256 verification.
+
+            ## Getting Started
+            ```bash
+            mcp-client login     # Authenticate with ClaraVerse
+            mcp-client start     # Start the client
+            mcp-client --help    # See all commands
+            ```
+          files: |
+            backend/mcp-bridge/bin/mcp-client-darwin-amd64
+            backend/mcp-bridge/bin/mcp-client-darwin-arm64
+            backend/mcp-bridge/bin/mcp-client-linux-amd64
+            backend/mcp-bridge/bin/mcp-client-windows-amd64.exe
+            backend/mcp-bridge/bin/checksums.txt
+            backend/mcp-bridge/bin/install.sh
+            backend/mcp-bridge/bin/install.ps1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "## Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Artifacts:**" >> $GITHUB_STEP_SUMMARY
+          echo "- mcp-client-darwin-amd64 (macOS Intel)" >> $GITHUB_STEP_SUMMARY
+          echo "- mcp-client-darwin-arm64 (macOS Apple Silicon)" >> $GITHUB_STEP_SUMMARY
+          echo "- mcp-client-linux-amd64 (Linux x86_64)" >> $GITHUB_STEP_SUMMARY
+          echo "- mcp-client-windows-amd64.exe (Windows)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Install:**" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/backend/mcp-bridge/scripts/install.sh | sh" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

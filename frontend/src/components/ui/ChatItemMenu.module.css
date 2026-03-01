@@ -1,0 +1,88 @@
+.menuContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.menuButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-1);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  opacity: 0;
+}
+
+.menuButton:hover {
+  background: var(--color-surface-hover);
+}
+
+/* Show button on parent hover */
+.menuContainer:hover .menuButton,
+.menuButton:focus {
+  opacity: 1;
+}
+
+.menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: var(--space-1);
+  min-width: 150px;
+  background: rgba(18, 18, 18, 0.95);
+  backdrop-filter: var(--backdrop-blur-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-1);
+  z-index: 1000;
+  animation: menuFadeIn 0.15s ease-out;
+}
+
+@keyframes menuFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.menuItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  text-align: left;
+}
+
+.menuItem:hover {
+  background: var(--color-surface-hover);
+}
+
+.menuItem.danger {
+  color: var(--color-error);
+}
+
+.menuItem.danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.starFilled {
+  fill: currentColor;
+}

@@ -1,0 +1,105 @@
+# Docker Compose Development Configuration with HMR
+# ============================================================================
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+#
+# Features:
+#   - Frontend: Vite dev server with Hot Module Replacement (HMR)
+#   - Backend: Go with Air for hot reload on file changes
+#   - Source code mounted as volumes for live editing
+#
+# Ports:
+#   - Frontend: http://localhost:5173 (Vite dev server)
+#   - Backend:  http://localhost:3001 (API)
+# ============================================================================
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: claraverse-backend-dev
+    volumes:
+      # Mount source code for hot reload (replaces base config volumes)
+      - ./backend:/app
+      # Exclude tmp directory (air builds here)
+      - /app/tmp
+      # Persistent data
+      - backend-data:/app/data
+      - backend-uploads:/app/uploads
+      - backend-logs:/app/logs
+    environment:
+      - ENVIRONMENT=development
+      # MySQL configuration
+      - DATABASE_URL=mysql://claraverse_user:${MYSQL_PASSWORD:-claraverse_pass_2024}@mysql:3306/claraverse?parseTime=true
+      - MYSQL_DATABASE=claraverse
+      - UPLOAD_DIR=/app/uploads
+      # Use Docker service names
+      - SEARXNG_URL=http://searxng:8080
+      - SEARXNG_URLS=http://searxng:8080
+      - MONGODB_URI=mongodb://mongodb:27017/claraverse
+      - REDIS_URL=redis://redis:6379
+      # Development CORS (allow Vite dev server)
+      - ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000,http://localhost:8080
+      # Auth & security
+      - ENCRYPTION_MASTER_KEY=${ENCRYPTION_MASTER_KEY:-}
+      - JWT_SECRET=${JWT_SECRET:-local_test_jwt_secret_32chars_min}
+      - FRONTEND_URL=http://localhost:5173
+      - BACKEND_URL=http://localhost:3001
+      - SUPERADMIN_USER_IDS=${SUPERADMIN_USER_IDS:-}
+      # Composio integrations (optional)
+      - COMPOSIO_API_KEY=${COMPOSIO_API_KEY:-}
+      - COMPOSIO_GOOGLESHEETS_AUTH_CONFIG_ID=${COMPOSIO_GOOGLESHEETS_AUTH_CONFIG_ID:-}
+      - COMPOSIO_GMAIL_AUTH_CONFIG_ID=${COMPOSIO_GMAIL_AUTH_CONFIG_ID:-}
+      - COMPOSIO_LINKEDIN_AUTH_CONFIG_ID=${COMPOSIO_LINKEDIN_AUTH_CONFIG_ID:-}
+      - COMPOSIO_GOOGLECALENDAR_AUTH_CONFIG_ID=${COMPOSIO_GOOGLECALENDAR_AUTH_CONFIG_ID:-}
+      - COMPOSIO_GOOGLEDRIVE_AUTH_CONFIG_ID=${COMPOSIO_GOOGLEDRIVE_AUTH_CONFIG_ID:-}
+      - COMPOSIO_CANVA_AUTH_CONFIG_ID=${COMPOSIO_CANVA_AUTH_CONFIG_ID:-}
+      - COMPOSIO_TWITTER_AUTH_CONFIG_ID=${COMPOSIO_TWITTER_AUTH_CONFIG_ID:-}
+      - COMPOSIO_YOUTUBE_AUTH_CONFIG_ID=${COMPOSIO_YOUTUBE_AUTH_CONFIG_ID:-}
+      - COMPOSIO_ZOOM_AUTH_CONFIG_ID=${COMPOSIO_ZOOM_AUTH_CONFIG_ID:-}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      searxng:
+        condition: service_healthy
+    restart: "no"
+    # Override healthcheck for development (more lenient)
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 5
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: claraverse-frontend-dev
+    ports: !override
+      - "5173:5173"
+    volumes:
+      # Mount source code for HMR
+      - ./frontend:/app
+      # Exclude node_modules (use container's installed modules)
+      - /app/node_modules
+    environment:
+      # Vite environment variables
+      - VITE_API_BASE_URL=http://localhost:3001
+      - VITE_WS_URL=ws://localhost:3001
+      - VITE_APP_NAME=ClaraVerse
+      - VITE_APP_VERSION=dev
+    depends_on:
+      - backend
+    restart: "no"
+    # Override healthcheck for development
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5173"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 5

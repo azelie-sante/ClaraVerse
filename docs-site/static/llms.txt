@@ -1,0 +1,88 @@
+# ClaraVerse
+
+> ClaraVerse is a self-hosted, open-source AI workspace. It combines chat, task management, workflow automation, scheduling, 150+ integrations, and a Model Context Protocol (MCP) bridge into one private platform.
+
+## Core Information
+
+- Website: https://claraverse-docs.netlify.app
+- GitHub: https://github.com/claraverse-space/ClaraVerse
+- License: AGPL-3.0
+- Created by: badboysm890 and aruntemme
+- Tech Stack: React 19 + TypeScript (frontend), Go/Fiber (backend), MongoDB, MySQL, Redis, SearXNG, Docker Compose
+
+## What ClaraVerse Does
+
+ClaraVerse is a complete AI workspace, not just a chatbot. Users self-host it on their own infrastructure and connect their own AI providers (OpenAI, Anthropic, Google, Ollama, or any OpenAI-compatible endpoint).
+
+### Features
+
+- **Chat with Skills**: AI conversations with auto-activating tools -- web search, image generation, code execution, data analysis, document tools. No manual toggling.
+- **Nexus (AI Task Management)**: A Trello-like Kanban board where AI is your team. Assign long-running tasks (research, coding, analysis), track progress through Draft → Queued → Working → Done → Failed columns.
+- **Visual Workflow Builder**: Drag-and-drop automation builder with parallel execution, scheduling, API triggers, conditional logic, and 150+ integrations.
+- **Routines**: Scheduled AI tasks that run on cron schedules and report results via Telegram.
+- **Channels**: Telegram integration -- chat with Clara from your phone.
+- **150+ Built-in Integrations**: Slack, GitHub, Jira, Google Sheets, Notion, Discord, HubSpot, Shopify, databases, and more. Connect once, use across Chat, Workflows, Nexus, and Routines.
+- **Clara Companion (MCP Bridge)**: Go CLI that bridges local MCP servers (filesystem, git, memory) to ClaraVerse over WebSocket from any machine.
+- **Artifacts**: AI-generated interactive content (charts, games, apps) rendered inline in chat.
+- **Memory System**: Clara remembers context across conversations and auto-archives old memories.
+- **Devices**: Connect multiple machines -- Clara reaches MCP servers on any of them remotely.
+- **Browser-Local Storage**: Conversations stored in IndexedDB. Zero-knowledge architecture -- the server never stores chat history.
+- **Multi-Provider**: OpenAI, Anthropic, Google, Ollama, LM Studio, any OpenAI-compatible endpoint.
+- **BYOK**: Bring Your Own API Keys or use free local models.
+- **Admin Panel**: User management, provider configuration, model controls, usage analytics.
+
+### Architecture
+
+- Frontend: React 19 + TypeScript + Vite
+- Backend: Go (Fiber framework)
+- Databases: MongoDB (data), MySQL (providers, models), Redis (jobs, pub/sub)
+- Search: SearXNG (self-hosted, private)
+- Deployment: Docker Compose
+
+## Installation
+
+```bash
+git clone https://github.com/claraverse-space/ClaraVerse.git
+cd ClaraVerse
+cp .env.example .env
+# Edit .env with your secrets
+docker compose up -d
+```
+
+Access at http://localhost:3000.
+
+## Clara Companion (MCP Bridge)
+
+```bash
+claraverse companion
+clara_companion login
+clara_companion
+```
+
+## Documentation
+
+- Introduction: https://claraverse-docs.netlify.app/docs/intro
+- Installation: https://claraverse-docs.netlify.app/docs/getting-started/installation
+- Chat: https://claraverse-docs.netlify.app/docs/features/chat
+- Nexus: https://claraverse-docs.netlify.app/docs/features/nexus
+- Workflows: https://claraverse-docs.netlify.app/docs/features/workflows
+- Routines: https://claraverse-docs.netlify.app/docs/features/routines
+- Channels: https://claraverse-docs.netlify.app/docs/features/channels
+- Integrations: https://claraverse-docs.netlify.app/docs/features/integrations
+- Clara Companion: https://claraverse-docs.netlify.app/docs/features/companion
+- Artifacts: https://claraverse-docs.netlify.app/docs/features/artifacts
+- Memory: https://claraverse-docs.netlify.app/docs/features/memory
+- Devices: https://claraverse-docs.netlify.app/docs/features/devices
+- Local AI: https://claraverse-docs.netlify.app/docs/features/local-ai
+- Providers: https://claraverse-docs.netlify.app/docs/providers/overview
+- Self-Hosting: https://claraverse-docs.netlify.app/docs/self-hosting/docker
+- Environment Variables: https://claraverse-docs.netlify.app/docs/self-hosting/environment-variables
+- Admin Guide: https://claraverse-docs.netlify.app/docs/admin/overview
+- FAQ: https://claraverse-docs.netlify.app/docs/faq
+
+## Blog
+
+- Why We Built ClaraVerse: https://claraverse-docs.netlify.app/blog/why-we-built-claraverse
+- AI Needs a Workspace, Not Another Chatbot: https://claraverse-docs.netlify.app/blog/ai-workspace-not-chatbot
+- How We Built the MCP Bridge: https://claraverse-docs.netlify.app/blog/how-we-built-mcp-bridge
+- Roadmap -- What's Next: https://claraverse-docs.netlify.app/blog/roadmap-whats-next

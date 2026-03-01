@@ -1,0 +1,36 @@
+# Backend Development Dockerfile with Hot Reload
+FROM golang:1.25.5-alpine
+
+# Install build dependencies and air for hot reload
+RUN apk add gcc musl-dev git curl chromium nss freetype harfbuzz ttf-freefont font-noto font-noto-emoji fontconfig \
+    && go install github.com/air-verse/air@latest
+
+# Rebuild font cache
+RUN fc-cache -f -v
+
+# Set working directory
+WORKDIR /app
+
+# Copy dependency files first
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download
+
+# Set environment variables for Chromium
+ENV CHROME_BIN=/usr/bin/chromium-browser \
+    CHROME_PATH=/usr/lib/chromium/
+
+# Create necessary directories
+RUN mkdir -p /app/data /app/config /app/uploads /app/logs /app/generated /app/secure_files
+
+# Expose port
+EXPOSE 3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1
+
+# Start with air for hot reload
+CMD ["air", "-c", ".air.toml"]
+

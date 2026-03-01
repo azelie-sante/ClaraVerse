@@ -1,0 +1,459 @@
+/* ToolStatusPill — Unified vertical step list for streaming + completed */
+
+.wrapper {
+  margin-bottom: var(--space-3);
+}
+
+/* ═══════════════════════════════════════════════
+   SHARED: Vertical step list
+   ═══════════════════════════════════════════════ */
+
+.stepList {
+  display: flex;
+  flex-direction: column;
+  padding-left: 2px;
+}
+
+.stepRow {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+}
+
+/* ─── Icon column ─── */
+.stepIconCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 18px;
+}
+
+.stepIcon {
+  width: 18px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+  z-index: 1;
+  transition: color 0.3s ease;
+  opacity: 0.5;
+}
+
+.stepIconActive {
+  color: var(--color-text-secondary);
+  opacity: 1;
+  animation: iconPulse 2s ease-in-out infinite;
+}
+
+.stepIconDone {
+  width: 18px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-success, #4caf50);
+  flex-shrink: 0;
+  z-index: 1;
+  opacity: 0.7;
+}
+
+@keyframes iconPulse {
+  0%,
+  100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ─── Spinning asterisk for status updates ─── */
+.spinnerAsterisk {
+  display: inline-block;
+  font-size: 14px;
+  line-height: 1;
+  animation: asteriskSpin 1.2s linear infinite;
+  color: inherit;
+}
+
+@keyframes asteriskSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* ─── Connector line ─── */
+.connector {
+  width: 1px;
+  flex: 1;
+  min-height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ─── Streaming step text ─── */
+.stepText {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  line-height: 24px;
+  transition: color 0.3s ease;
+  opacity: 0.5;
+}
+
+.stepTextActive {
+  opacity: 1;
+  color: transparent;
+  background: linear-gradient(
+    90deg,
+    rgba(180, 180, 195, 0.6) 0%,
+    rgba(180, 180, 195, 0.6) 20%,
+    rgba(220, 220, 235, 0.95) 40%,
+    rgba(255, 255, 255, 1) 50%,
+    rgba(220, 220, 235, 0.95) 60%,
+    rgba(180, 180, 195, 0.6) 80%,
+    rgba(180, 180, 195, 0.6) 100%
+  );
+  background-size: 250% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  animation: silverSweep 2.2s ease-in-out infinite, glitchFlicker 4s step-end infinite;
+}
+
+@keyframes silverSweep {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+@keyframes glitchFlicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  92% {
+    opacity: 1;
+  }
+  93% {
+    opacity: 0.85;
+    transform: translateX(1px);
+  }
+  94% {
+    opacity: 1;
+    transform: translateX(-1px);
+  }
+  95% {
+    opacity: 0.9;
+    transform: translateX(0);
+  }
+  96% {
+    opacity: 1;
+  }
+}
+
+/* ─── Collapsed streaming steps ─── */
+.collapsedRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.collapsedIconCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 18px;
+  padding: 4px 0;
+}
+
+.dot {
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.collapsedLabel {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  opacity: 0.4;
+  line-height: 24px;
+}
+
+/* ═══════════════════════════════════════════════
+   COMPLETED: Collapsible header + step list
+   ═══════════════════════════════════════════════ */
+
+.completedHeader {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.completedHeader:hover .completedHeaderText {
+  color: var(--color-text-primary);
+}
+
+.completedHeaderText {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  transition: color 0.15s ease;
+  opacity: 0.85;
+}
+
+.completedChevron {
+  color: var(--color-text-tertiary);
+  display: flex;
+  align-items: center;
+  transition: color 0.15s ease;
+}
+
+.completedHeader:hover .completedChevron {
+  color: var(--color-text-secondary);
+}
+
+/* ─── Completed step block (row + optional inline results) ─── */
+.completedStepBlock {
+  display: flex;
+  flex-direction: column;
+}
+
+.completedStepContent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 24px;
+  min-width: 0;
+}
+
+.completedStepText {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  line-height: 24px;
+}
+
+.completedStepQuery {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+/* Right-aligned count/detail on completed step */
+.completedStepRight {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+  margin-left: auto;
+  opacity: 0.6;
+}
+
+/* Chevron on clickable tool steps */
+.completedStepChevron {
+  display: flex;
+  align-items: center;
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+  opacity: 0.4;
+  transition: opacity 0.15s ease;
+}
+
+/* Clickable step row */
+.stepRowClickable {
+  cursor: pointer;
+}
+
+.stepRowClickable:hover .completedStepText {
+  color: var(--color-text-primary);
+}
+
+.stepRowClickable:hover .completedStepChevron {
+  opacity: 0.7;
+}
+
+/* ─── Inline search results under a search step ─── */
+.searchResultsInline {
+  display: flex;
+  gap: 10px;
+  padding-left: 0;
+}
+
+.searchResultsConnector {
+  width: 18px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.searchResultsConnector::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateX(-50%);
+}
+
+.searchResultsCard {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin: 4px 0 4px 0;
+  max-height: 160px;
+}
+
+.searchResultsCard::-webkit-scrollbar {
+  width: 3px;
+}
+
+.searchResultsCard::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.searchResultsCard::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.searchResultsCard::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ─── Result item row (shared between search card) ─── */
+.resultItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+  text-decoration: none;
+  color: inherit;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.resultItem:last-child {
+  border-bottom: none;
+}
+
+.resultItem:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.favicon {
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.resultTitle {
+  flex: 1;
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.resultDomain {
+  flex-shrink: 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+/* ─── Tool detail expandable (non-search tools) ─── */
+.toolDetailInline {
+  display: flex;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.toolDetailConnector {
+  width: 18px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.toolDetailConnector::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateX(-50%);
+}
+
+.toolDetailText {
+  flex: 1;
+  font-size: 11px;
+  font-family: var(--font-mono, 'SF Mono', 'Fira Code', 'Fira Mono', monospace);
+  color: var(--color-text-tertiary);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  margin: 4px 0;
+  max-height: 120px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.5;
+}
+
+.toolDetailText::-webkit-scrollbar {
+  width: 3px;
+}
+
+.toolDetailText::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.toolDetailText::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .resultItem {
+    padding: 6px 10px;
+    gap: 8px;
+  }
+
+  .resultDomain {
+    display: none;
+  }
+
+  .completedStepQuery {
+    max-width: 120px;
+  }
+}

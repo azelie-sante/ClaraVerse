@@ -1,0 +1,152 @@
+.mcp-onboarding {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: var(--color-bg-primary);
+}
+
+.mcp-onboarding-card {
+  width: 100%;
+  max-width: 480px;
+  padding: var(--space-6);
+}
+
+/* Success State */
+.success-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-6) var(--space-4);
+}
+
+.success-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  margin-bottom: var(--space-4);
+  background: rgba(34, 197, 94, 0.15);
+  border-radius: var(--radius-full);
+  color: var(--color-success);
+  animation: success-pop 0.4s ease-out;
+}
+
+@keyframes success-pop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.success-title {
+  margin-bottom: var(--space-2);
+  color: var(--color-success);
+}
+
+.success-device-info {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-4);
+}
+
+.success-message {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-4);
+  color: var(--color-text-primary);
+}
+
+.success-message svg {
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.success-hint {
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-4);
+}
+
+.dashboard-button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+/* Shared step styles */
+.step-header {
+  text-align: center;
+  margin-bottom: var(--space-5);
+}
+
+.step-icon-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: var(--space-3);
+  background: var(--color-accent-muted);
+  border-radius: var(--radius-full);
+  color: var(--color-accent);
+}
+
+.step-icon-wrapper.success {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--color-success);
+}
+
+.step-title {
+  margin-bottom: var(--space-1);
+}
+
+.step-subtitle {
+  color: var(--color-text-secondary);
+}
+
+.step-actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+.step-actions > * {
+  flex: 1;
+}
+
+/* Responsive */
+@media (max-width: 500px) {
+  .mcp-onboarding-card {
+    max-width: 100%;
+    margin: var(--space-2);
+    padding: var(--space-4);
+  }
+
+  .step-indicator {
+    width: 28px;
+    height: 28px;
+  }
+
+  .step-connector {
+    top: 13px;
+  }
+
+  .step-label {
+    font-size: 10px;
+  }
+}

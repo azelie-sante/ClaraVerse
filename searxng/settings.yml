@@ -1,0 +1,108 @@
+use_default_settings: true
+
+server:
+  limiter: false  # Disable rate limiting for better performance
+  secret_key: "ultrasecretkeythatnobodyshouldknow"
+  image_proxy: true
+
+search:
+  formats:
+    - html
+    - json
+
+  # Increase timeout for slow engines
+  request_timeout: 10.0
+
+  # Enable autocomplete
+  autocomplete: "duckduckgo"
+
+  # Default results per page
+  default_results_per_page: 10
+
+  # Max results per page
+  max_results_per_page: 20
+
+# Enable multiple search engines for redundancy
+engines:
+  # General search engines (high priority)
+  - name: duckduckgo
+    engine: duckduckgo
+    shortcut: ddg
+    disabled: false
+    timeout: 3.0
+
+  - name: brave
+    engine: brave
+    shortcut: br
+    disabled: false
+    time_range_support: true
+
+  - name: wikipedia
+    engine: wikipedia
+    shortcut: wp
+    disabled: false
+
+  # News engines
+  - name: bing news
+    engine: bing_news
+    shortcut: bin
+    disabled: false
+
+  - name: google news
+    engine: google_news
+    shortcut: gn
+    disabled: false
+
+  # Code/GitHub search
+  - name: github
+    engine: github
+    shortcut: gh
+    disabled: false
+
+  # Fallback engines
+  - name: qwant
+    engine: qwant
+    shortcut: qw
+    disabled: false
+    categories: general
+
+  - name: yahoo
+    engine: yahoo
+    shortcut: yh
+    disabled: false
+
+  - name: mojeek
+    engine: mojeek
+    shortcut: mjk
+    disabled: false
+
+  # Image search engines
+  - name: google images
+    engine: google_images
+    shortcut: gimg
+    disabled: false
+
+  - name: bing images
+    engine: bing_images
+    shortcut: bimg
+    disabled: false
+
+  - name: duckduckgo images
+    engine: duckduckgo_images
+    shortcut: ddimg
+    disabled: false
+
+# Outgoing request configuration
+outgoing:
+  request_timeout: 10.0
+  max_request_timeout: 15.0
+  pool_connections: 100
+  pool_maxsize: 20
+  enable_http2: true
+
+  # Reduce fingerprinting
+  useragent_suffix: ""
+
+  # Retry failed requests
+  retries: 2
+  retry_on_http_error: [408, 429, 500, 502, 503, 504]

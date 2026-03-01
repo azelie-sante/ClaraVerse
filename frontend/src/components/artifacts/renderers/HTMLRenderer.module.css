@@ -1,0 +1,38 @@
+/* HTMLRenderer Styles */
+
+.iframe {
+  width: 100%;
+  height: 100%;
+  flex: 1; /* Take available space in flex container */
+  min-height: 0; /* Critical for flexbox overflow */
+  border: none;
+  background: white;
+  border-radius: var(--radius-lg);
+  overflow: auto; /* Enable scrolling within iframe container */
+  overscroll-behavior: contain; /* Prevent scroll chaining to parent */
+}
+
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  width: 100%;
+  height: 100%;
+  padding: var(--space-6);
+  color: #ef4444;
+  text-align: center;
+}
+
+.error p {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.error span {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  max-width: 400px;
+}

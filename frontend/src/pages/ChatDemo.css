@@ -1,0 +1,128 @@
+/* Chat Demo Layout */
+.chat-demo {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--color-background);
+}
+
+/* Header */
+.chat-demo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-6) var(--space-8);
+  border-bottom: 0.5px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.chat-demo-subtitle {
+  color: var(--color-text-secondary);
+  margin-top: var(--space-1);
+}
+
+.chat-demo-header-actions {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+/* Content */
+.chat-demo-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Chat Messages */
+.chat-demo-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-8);
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-demo-messages::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-demo-messages::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+
+.chat-demo-messages::-webkit-scrollbar-thumb {
+  background: var(--color-border-hover);
+  border-radius: var(--radius-sm);
+}
+
+.chat-demo-messages::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent);
+}
+
+/* Chat Input */
+.chat-demo-input {
+  padding: var(--space-6) var(--space-8);
+  border-top: 0.5px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+/* Showcase */
+.chat-demo-showcase {
+  padding: var(--space-8);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.component-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.example-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+/* Toast Container */
+.toast-container {
+  position: fixed;
+  top: var(--space-6);
+  right: var(--space-6);
+  z-index: var(--z-tooltip);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .chat-demo-header {
+    flex-direction: column;
+    gap: var(--space-4);
+    align-items: flex-start;
+  }
+
+  .chat-demo-header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .chat-demo-messages,
+  .chat-demo-input,
+  .chat-demo-showcase {
+    padding: var(--space-4);
+  }
+
+  .example-buttons {
+    width: 100%;
+  }
+
+  .example-buttons button {
+    width: 100%;
+  }
+}

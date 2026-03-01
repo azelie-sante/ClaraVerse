@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClaraVerse Upload Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .test-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .test-panel h2 {
+            margin-bottom: 20px;
+            color: #1f2937;
+            font-size: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #374151;
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        input[type="text"]:focus,
+        input[type="file"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .btn-delete {
+            background: #ef4444;
+        }
+
+        .btn-delete:hover {
+            background: #dc2626;
+        }
+
+        .results {
+            background: #f3f4f6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .success {
+            background: #d1fae5;
+            border-left: 4px solid #10b981;
+            color: #065f46;
+        }
+
+        .error {
+            background: #fee2e2;
+            border-left: 4px solid #ef4444;
+            color: #991b1b;
+        }
+
+        .info {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            color: #1e40af;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 300px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+        }
+
+        .instructions {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .instructions h3 {
+            color: #92400e;
+            margin-bottom: 10px;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+            color: #78350f;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+
+        small {
+            display: block;
+            margin-top: 5px;
+            color: #6b7280;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🖼️ ClaraVerse Upload Test</h1>
+
+        <!-- Instructions -->
+        <div class="instructions">
+            <h3>📋 How to Test</h3>
+            <ol>
+                <li>Get your auth token from test-client.html (login and check browser console)</li>
+                <li>Paste the token in the field below</li>
+                <li>Select an image file (PNG, JPG, WebP, GIF - max 20MB)</li>
+                <li>Click "Upload Image"</li>
+                <li>If successful, you'll see the uploaded image and can test deletion</li>
+            </ol>
+        </div>
+
+        <!-- Upload Test -->
+        <div class="test-panel">
+            <h2>🔐 1. Authentication</h2>
+            <div class="form-group">
+                <label for="authToken">JWT Token (from Supabase login)</label>
+                <input
+                    type="text"
+                    id="authToken"
+                    placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                />
+                <small>Get this from test-client.html after logging in</small>
+            </div>
+        </div>
+
+        <div class="test-panel">
+            <h2>📤 2. Upload Image</h2>
+            <div class="form-group">
+                <label for="imageFile">Select Image File</label>
+                <input
+                    type="file"
+                    id="imageFile"
+                    accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
+                />
+                <small>Supported: PNG, JPG, WebP, GIF (max 20MB)</small>
+            </div>
+            <button onclick="uploadImage()">Upload Image</button>
+            <div id="uploadResults" class="results" style="display: none;"></div>
+            <img id="uploadedImage" class="image-preview" style="display: none;" />
+        </div>
+
+        <div class="test-panel">
+            <h2>🗑️ 3. Delete Image</h2>
+            <div class="form-group">
+                <label for="fileId">File ID (from upload response)</label>
+                <input
+                    type="text"
+                    id="fileId"
+                    placeholder="550e8400-e29b-41d4-a716-446655440000"
+                    readonly
+                />
+                <small>Auto-filled from upload response</small>
+            </div>
+            <button onclick="deleteImage()" class="btn-delete" id="deleteBtn" disabled>
+                Delete Uploaded Image
+            </button>
+            <div id="deleteResults" class="results" style="display: none;"></div>
+        </div>
+
+        <div class="test-panel">
+            <h2>💬 4. WebSocket Test with Vision Model</h2>
+            <div class="form-group">
+                <label for="visionPrompt">Ask about the image</label>
+                <input
+                    type="text"
+                    id="visionPrompt"
+                    placeholder="What's in this image?"
+                    value="What do you see in this image? Describe it in detail."
+                />
+            </div>
+            <button onclick="testVisionModel()" id="visionBtn" disabled>
+                Send to GPT-4o (Vision Model)
+            </button>
+            <div id="visionResults" class="results" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const SERVER_URL = 'http://localhost:3001';
+        let uploadedFileData = null;
+
+        function getAuthToken() {
+            return document.getElementById('authToken').value.trim();
+        }
+
+        async function uploadImage() {
+            const token = getAuthToken();
+            const fileInput = document.getElementById('imageFile');
+            const resultsDiv = document.getElementById('uploadResults');
+            const imagePreview = document.getElementById('uploadedImage');
+
+            if (!token) {
+                showResults(resultsDiv, 'error', '❌ Please enter your JWT token first');
+                return;
+            }
+
+            if (!fileInput.files || !fileInput.files[0]) {
+                showResults(resultsDiv, 'error', '❌ Please select an image file');
+                return;
+            }
+
+            const file = fileInput.files[0];
+
+            // Validate file size
+            if (file.size > 20 * 1024 * 1024) {
+                showResults(resultsDiv, 'error', `❌ File too large: ${(file.size / 1024 / 1024).toFixed(2)}MB (max 20MB)`);
+                return;
+            }
+
+            showResults(resultsDiv, 'info', '⏳ Uploading image...');
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(`${SERVER_URL}/api/upload`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    uploadedFileData = data;
+
+                    // Fill file ID field
+                    document.getElementById('fileId').value = data.file_id;
+                    document.getElementById('deleteBtn').disabled = false;
+                    document.getElementById('visionBtn').disabled = false;
+
+                    // Show success message
+                    const message = `✅ Upload Successful!
+
+File ID: ${data.file_id}
+URL: ${data.url}
+MIME Type: ${data.mime_type}
+Size: ${(data.size / 1024).toFixed(2)} KB
+
+You can now:
+- View the uploaded image below
+- Delete it using the button below
+- Send it to a vision model for analysis`;
+
+                    showResults(resultsDiv, 'success', message);
+
+                    // Show image preview
+                    imagePreview.src = `${SERVER_URL}${data.url}`;
+                    imagePreview.style.display = 'block';
+
+                } else {
+                    showResults(resultsDiv, 'error', `❌ Upload Failed (${response.status})\n\n${JSON.stringify(data, null, 2)}`);
+                }
+            } catch (error) {
+                showResults(resultsDiv, 'error', `❌ Error: ${error.message}`);
+            }
+        }
+
+        async function deleteImage() {
+            const token = getAuthToken();
+            const fileId = document.getElementById('fileId').value.trim();
+            const resultsDiv = document.getElementById('deleteResults');
+
+            if (!token || !fileId) {
+                showResults(resultsDiv, 'error', '❌ Missing token or file ID');
+                return;
+            }
+
+            showResults(resultsDiv, 'info', '⏳ Deleting image...');
+
+            try {
+                const response = await fetch(`${SERVER_URL}/api/upload/${fileId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showResults(resultsDiv, 'success', `✅ ${data.message}`);
+
+                    // Clear fields
+                    document.getElementById('fileId').value = '';
+                    document.getElementById('uploadedImage').style.display = 'none';
+                    document.getElementById('deleteBtn').disabled = true;
+                    document.getElementById('visionBtn').disabled = true;
+                    uploadedFileData = null;
+                } else {
+                    showResults(resultsDiv, 'error', `❌ Delete Failed (${response.status})\n\n${JSON.stringify(data, null, 2)}`);
+                }
+            } catch (error) {
+                showResults(resultsDiv, 'error', `❌ Error: ${error.message}`);
+            }
+        }
+
+        async function testVisionModel() {
+            const token = getAuthToken();
+            const prompt = document.getElementById('visionPrompt').value.trim();
+            const resultsDiv = document.getElementById('visionResults');
+
+            if (!token || !uploadedFileData) {
+                showResults(resultsDiv, 'error', '❌ Missing token or uploaded file');
+                return;
+            }
+
+            showResults(resultsDiv, 'info', '⏳ Fetching models list...\n');
+
+            // First, fetch models to get the correct ID for gpt-4o
+            let gpt4oModelId = null;
+            try {
+                const modelsResponse = await fetch(`${SERVER_URL}/api/models`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const modelsData = await modelsResponse.json();
+
+                // Find gpt-4o model (or any vision-capable model)
+                const visionModel = modelsData.find(m => m.name === 'gpt-4o' || (m.name.includes('gpt-4') && m.supports_vision));
+
+                if (visionModel) {
+                    gpt4oModelId = visionModel.id;
+                    appendResults(resultsDiv, `✅ Found vision model: ${visionModel.name} (ID: ${gpt4oModelId})\n`);
+                } else {
+                    showResults(resultsDiv, 'error', '❌ No vision-capable model found. Available models: ' + modelsData.map(m => m.name).join(', '));
+                    return;
+                }
+            } catch (error) {
+                showResults(resultsDiv, 'error', `❌ Failed to fetch models: ${error.message}`);
+                return;
+            }
+
+            appendResults(resultsDiv, '⏳ Connecting to WebSocket...\n');
+
+            try {
+                const ws = new WebSocket(`${SERVER_URL.replace('http', 'ws')}/ws/chat?token=${token}`);
+
+                let conversationId = null;
+                let fullResponse = '';
+
+                ws.onopen = () => {
+                    appendResults(resultsDiv, '✅ WebSocket connected\n');
+                };
+
+                ws.onmessage = (event) => {
+                    const msg = JSON.parse(event.data);
+
+                    switch (msg.type) {
+                        case 'connected':
+                            conversationId = msg.conversation_id;
+                            appendResults(resultsDiv, `✅ Conversation ID: ${conversationId}\n\n`);
+
+                            // Send message with image attachment
+                            ws.send(JSON.stringify({
+                                type: 'chat_message',
+                                conversation_id: conversationId,
+                                content: prompt,
+                                model_id: gpt4oModelId,  // Use the database ID we fetched
+                                attachments: [
+                                    {
+                                        type: 'image',
+                                        file_id: uploadedFileData.file_id,
+                                        url: uploadedFileData.url,
+                                        mime_type: uploadedFileData.mime_type,
+                                        size: uploadedFileData.size
+                                    }
+                                ]
+                            }));
+
+                            appendResults(resultsDiv, '📤 Sent image to GPT-4o with prompt: "' + prompt + '"\n\n');
+                            appendResults(resultsDiv, '🤖 GPT-4o Response:\n---\n');
+                            break;
+
+                        case 'stream_chunk':
+                            fullResponse += msg.content;
+                            appendResults(resultsDiv, msg.content);
+                            break;
+
+                        case 'stream_end':
+                            appendResults(resultsDiv, '\n---\n✅ Response complete!');
+                            ws.close();
+                            break;
+
+                        case 'error':
+                            appendResults(resultsDiv, `\n\n❌ Error: ${msg.message}`);
+                            ws.close();
+                            break;
+                    }
+                };
+
+                ws.onerror = (error) => {
+                    appendResults(resultsDiv, `\n❌ WebSocket Error: ${error}`);
+                };
+
+                ws.onclose = () => {
+                    appendResults(resultsDiv, '\n\n🔌 Connection closed');
+                };
+
+            } catch (error) {
+                showResults(resultsDiv, 'error', `❌ Error: ${error.message}`);
+            }
+        }
+
+        function showResults(element, type, text) {
+            element.className = `results ${type}`;
+            element.textContent = text;
+            element.style.display = 'block';
+        }
+
+        function appendResults(element, text) {
+            element.textContent += text;
+            element.scrollTop = element.scrollHeight;
+        }
+    </script>
+</body>
+</html>

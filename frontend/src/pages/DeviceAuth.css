@@ -1,0 +1,20 @@
+/* Device Auth Page - Minimal wrapper styles */
+/* MCPOnboarding component handles all wizard styling */
+
+.device-auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: var(--color-bg-primary);
+}
+
+.device-auth-loading-card {
+  width: 100%;
+  max-width: 320px;
+  padding: var(--space-8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

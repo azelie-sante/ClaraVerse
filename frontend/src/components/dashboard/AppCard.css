@@ -1,0 +1,183 @@
+.app-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  /* Size */
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+  padding: var(--space-6);
+  box-sizing: border-box;
+
+  /* Surface */
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+
+  /* Effects */
+  backdrop-filter: var(--backdrop-blur-md);
+  transition: all var(--transition-base);
+  cursor: pointer;
+  text-decoration: none;
+
+  /* Shine effect overlay */
+  overflow: hidden;
+}
+
+.app-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: var(--gradient-shine);
+  transition: left var(--transition-slow);
+  pointer-events: none;
+}
+
+.app-card:hover {
+  transform: translateY(-8px) scale(1.08);
+  border-color: var(--color-accent-border);
+  box-shadow: var(--shadow-glow-md);
+  background: var(--color-surface-hover);
+}
+
+.app-card:hover::before {
+  left: 100%;
+}
+
+.app-card:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.app-card:active {
+  transform: translateY(-4px);
+}
+
+/* Icon */
+.app-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: var(--space-3);
+
+  color: var(--color-accent);
+  background: var(--color-accent-light);
+  border-radius: var(--radius-md);
+
+  transition: all var(--transition-base);
+}
+
+.app-card:hover .app-card-icon {
+  background: var(--color-accent);
+  color: var(--color-background);
+  box-shadow: var(--shadow-glow-sm);
+}
+
+/* Title */
+.app-card-title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-1) 0;
+  transition: color var(--transition-fast);
+}
+
+.app-card:hover .app-card-title {
+  color: var(--color-accent-hover);
+}
+
+/* Description */
+.app-card-description {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+  margin: 0;
+  max-width: 200px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .app-card {
+    min-height: 200px;
+    padding: var(--space-5);
+  }
+
+  .app-card-icon {
+    width: 56px;
+    height: 56px;
+  }
+
+  .app-card-icon svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  .app-card-title {
+    font-size: var(--text-lg);
+  }
+
+  .app-card-description {
+    font-size: var(--text-xs);
+  }
+}
+
+/* ================================================
+   Mobile Phone-Style App Icon (Compact Mode)
+   ================================================ */
+
+.app-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 8px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app-icon:active {
+  transform: scale(0.92);
+}
+
+.app-icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  color: var(--color-accent);
+  transition: all var(--transition-fast);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.app-icon:active .app-icon-container {
+  background: var(--color-accent);
+  color: var(--color-background);
+  border-color: var(--color-accent);
+}
+
+.app-icon-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  text-align: center;
+  line-height: 1.2;
+  max-width: 72px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

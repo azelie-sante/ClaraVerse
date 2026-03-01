@@ -1,0 +1,164 @@
+# =============================================================================
+# ClaraVerse Production Docker Compose
+# =============================================================================
+# Quick start:
+#   docker compose -f docker-compose.production.yml up -d
+#
+# Then open http://localhost:3000 and create your first account.
+# The first registered user automatically becomes admin.
+#
+# All secrets (JWT, encryption keys) are auto-generated on first run
+# and persisted in the claraverse-data volume.
+#
+# Local AI (Ollama / LM Studio):
+#   If you have Ollama or LM Studio running on your host machine,
+#   ClaraVerse will auto-detect them and add their models automatically.
+#   Override URLs: OLLAMA_BASE_URL=http://host.docker.internal:11434
+#                  LMSTUDIO_BASE_URL=http://host.docker.internal:1234
+# =============================================================================
+
+services:
+  claraverse:
+    image: ghcr.io/claraverse-space/claraverse:${CLARAVERSE_TAG:-latest}
+    container_name: claraverse
+    ports:
+      - "${CLARAVERSE_PORT:-3000}:3000"
+    volumes:
+      - claraverse-data:/app/data
+      - claraverse-uploads:/app/uploads
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      # Database connections (use Docker service names)
+      - DATABASE_URL=mysql://claraverse:claraverse@mysql:3306/claraverse?parseTime=true
+      - MONGODB_URI=mongodb://mongodb:27017/claraverse
+      - REDIS_URL=redis://redis:6379
+      - SEARXNG_URL=http://searxng:8080
+      - SEARXNG_URLS=http://searxng:8080
+      # Frontend serving (all-in-one mode)
+      - SERVE_FRONTEND=true
+      - FRONTEND_URL=http://localhost:${CLARAVERSE_PORT:-3000}
+      - BACKEND_URL=http://localhost:${CLARAVERSE_PORT:-3000}
+      - ALLOWED_ORIGINS=*
+      # Local AI providers (auto-detected — override if using non-default ports)
+      # - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      # - LMSTUDIO_BASE_URL=http://host.docker.internal:1234
+      # Optional: Set these to use specific keys instead of auto-generated ones
+      # - JWT_SECRET=your-secret-here
+      # - ENCRYPTION_MASTER_KEY=your-key-here
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    networks:
+      - claraverse
+
+  mongodb:
+    image: mongo:7
+    container_name: claraverse-mongodb
+    volumes:
+      - mongodb-data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=claraverse
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+    networks:
+      - claraverse
+
+  mysql:
+    image: mysql:8.0
+    container_name: claraverse-mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql-data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: claraverse
+      MYSQL_DATABASE: claraverse
+      MYSQL_USER: claraverse
+      MYSQL_PASSWORD: claraverse
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+    networks:
+      - claraverse
+
+  redis:
+    image: redis:7-alpine
+    container_name: claraverse-redis
+    command: redis-server --appendonly yes --maxmemory 100mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      start_period: 5s
+      retries: 5
+    networks:
+      - claraverse
+
+  searxng:
+    image: searxng/searxng:latest
+    container_name: claraverse-searxng
+    volumes:
+      - searxng-config:/etc/searxng
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        # Write optimized settings on first run (disable limiter for internal use)
+        if [ ! -f /etc/searxng/settings.yml ]; then
+          cat > /etc/searxng/settings.yml <<'SETTINGS'
+        use_default_settings: true
+        server:
+          limiter: false
+          secret_key: "claraverse-searxng-$(head -c 16 /dev/urandom | od -A n -t x1 | tr -d ' \n')"
+          image_proxy: true
+        search:
+          formats:
+            - html
+            - json
+          autocomplete: "duckduckgo"
+        SETTINGS
+        fi
+        exec /usr/local/searxng/entrypoint.sh
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 3s
+      start_period: 15s
+      retries: 3
+    networks:
+      - claraverse
+
+volumes:
+  claraverse-data:
+  claraverse-uploads:
+  mongodb-data:
+  mysql-data:
+  redis-data:
+  searxng-config:
+
+networks:
+  claraverse:
+    driver: bridge

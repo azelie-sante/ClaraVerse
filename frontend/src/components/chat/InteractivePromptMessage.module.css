@@ -1,0 +1,494 @@
+/* InteractivePromptMessage — Step-by-step wizard card */
+
+.card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin: var(--space-4) 0;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════
+   HEADER: question text + nav + close
+   ═══════════════════════════════════════════════ */
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.questionText {
+  font-size: var(--text-base);
+  font-weight: 500;
+  color: var(--color-text-primary);
+  flex: 1;
+  min-width: 0;
+  line-height: 1.4;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.navButton {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: all 150ms ease;
+  padding: 0;
+  font-family: var(--font-sans);
+}
+
+.navButton:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-text-primary);
+}
+
+.navButton:disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
+}
+
+/* Submit arrow (last question) gets a subtle filled style */
+.navButtonSubmit {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text-primary);
+}
+
+.navButtonSubmit:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.counter {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  min-width: 44px;
+  text-align: center;
+  user-select: none;
+}
+
+.closeButton {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: all 150ms ease;
+  margin-left: var(--space-1);
+  padding: 0;
+}
+
+.closeButton:hover {
+  color: var(--color-text-primary);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* ═══════════════════════════════════════════════
+   DESCRIPTION (optional, first question only)
+   ═══════════════════════════════════════════════ */
+
+.description {
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+  margin: 0 0 var(--space-3) 0;
+  line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════════
+   QUESTION SLIDE (animated container)
+   ═══════════════════════════════════════════════ */
+
+.questionSlide {
+  min-height: 48px;
+}
+
+/* ═══════════════════════════════════════════════
+   OPTION ROWS (select / multi-select)
+   ═══════════════════════════════════════════════ */
+
+.optionsList {
+  display: flex;
+  flex-direction: column;
+}
+
+.optionRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3);
+  cursor: pointer;
+  transition: background 120ms ease;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 0;
+  user-select: none;
+}
+
+.optionRow:last-child {
+  border-bottom: none;
+}
+
+.optionRow:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.optionRowFocused {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.optionRowSelected {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Numbered badge */
+.optionBadge {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+  transition: all 150ms ease;
+}
+
+.optionRowFocused .optionBadge,
+.optionRowSelected .optionBadge {
+  color: var(--color-text-primary);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.optionLabel {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  flex: 1;
+  min-width: 0;
+  transition: color 150ms ease;
+}
+
+.optionRowFocused .optionLabel,
+.optionRowSelected .optionLabel {
+  color: var(--color-text-primary);
+}
+
+/* Submit arrow on focused row (single-select) */
+.optionArrow {
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.optionRowFocused .optionArrow {
+  opacity: 1;
+}
+
+/* ─── Multi-select check indicator ─── */
+.checkIndicator {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 150ms ease;
+}
+
+.checkIndicatorChecked {
+  border-color: var(--color-accent, #64b5f6);
+  background: var(--color-accent, #64b5f6);
+}
+
+/* ═══════════════════════════════════════════════
+   "SOMETHING ELSE" ROW (Other option)
+   ═══════════════════════════════════════════════ */
+
+.otherRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.otherRow:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.otherRowFocused {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.otherIcon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+  transition: all 150ms ease;
+}
+
+.otherRowFocused .otherIcon {
+  color: var(--color-text-primary);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.otherInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  min-width: 0;
+}
+
+.otherInput::placeholder {
+  color: var(--color-text-tertiary);
+  opacity: 0.6;
+}
+
+/* ═══════════════════════════════════════════════
+   TEXT / NUMBER INPUT
+   ═══════════════════════════════════════════════ */
+
+.textInput {
+  width: 100%;
+  padding: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  outline: none;
+  font-family: var(--font-sans);
+  transition: border-color 150ms ease;
+}
+
+.textInput:focus {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.textInput::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.textInputError {
+  border-color: var(--color-error, #ff453a);
+}
+
+.inputHint {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  margin-top: var(--space-1);
+  opacity: 0.6;
+}
+
+/* ═══════════════════════════════════════════════
+   BOOLEAN TOGGLE (checkbox type)
+   ═══════════════════════════════════════════════ */
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  transition: background 120ms ease;
+  user-select: none;
+}
+
+.toggleRow:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.toggleTrack {
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  position: relative;
+  transition: background 150ms ease;
+  flex-shrink: 0;
+}
+
+.toggleTrackActive {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.toggleKnob {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-text-secondary);
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: transform 150ms ease;
+}
+
+.toggleTrackActive .toggleKnob {
+  transform: translateX(16px);
+  background: var(--color-text-primary);
+}
+
+.toggleLabel {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+/* ═══════════════════════════════════════════════
+   FOOTER: selected count, error, skip
+   ═══════════════════════════════════════════════ */
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-3);
+  min-height: 24px;
+}
+
+.footerLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.selectedCount {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+
+.errorText {
+  font-size: var(--text-xs);
+  color: var(--color-error, #ff453a);
+}
+
+.footerRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.skipButton {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  padding: var(--space-1) var(--space-3);
+  border-radius: 6px;
+  transition: all 150ms ease;
+}
+
+.skipButton:hover {
+  color: var(--color-text-secondary);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.skipButton:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Next/submit button in footer for multi-select */
+.footerNextButton {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: all 150ms ease;
+  padding: 0;
+}
+
+.footerNextButton:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.footerNextButton:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ═══════════════════════════════════════════════
+   KEYBOARD HINTS
+   ═══════════════════════════════════════════════ */
+
+.keyboardHints {
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  opacity: 0.4;
+  text-align: center;
+  user-select: none;
+}
+
+.hintSep {
+  margin: 0 6px;
+  opacity: 0.4;
+}
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .card {
+    padding: var(--space-4);
+  }
+
+  .header {
+    gap: var(--space-2);
+  }
+
+  .questionText {
+    font-size: var(--text-sm);
+  }
+
+  .keyboardHints {
+    display: none;
+  }
+}

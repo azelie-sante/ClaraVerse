@@ -1,0 +1,33 @@
+# Configuration files with secrets
+providers.json
+.env
+
+# Database
+model_capabilities.db
+*.db
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+.claude/
+
+# Build artifacts
+claraverse-server
+claraverse-server.exe
+*.exe
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Air hot reload
+tmp/
+*.md
+
+*.venv/
+# Air hot reload temp directory
+tmp/
+build-errors.log

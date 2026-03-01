@@ -1,0 +1,169 @@
+/* Design System Showcase Styles */
+
+.design-system {
+  min-height: 100vh;
+  padding: var(--space-8) var(--space-4);
+  max-width: var(--container-xl);
+  margin: 0 auto;
+}
+
+/* Hero Section */
+.ds-hero {
+  text-align: center;
+  padding: var(--space-32) 0 var(--space-24) 0;
+}
+
+.ds-hero-subtitle {
+  color: var(--color-text-secondary);
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+
+.ds-hero-badges {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Sections */
+.ds-section {
+  margin-bottom: var(--space-24);
+}
+
+.ds-section-title {
+  margin-bottom: var(--space-3);
+  color: var(--color-text-primary);
+}
+
+.ds-section-description {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-8);
+}
+
+/* Showcase Grids */
+.ds-showcase-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-8);
+  margin-bottom: var(--space-8);
+}
+
+@media (min-width: 768px) {
+  .ds-showcase-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .ds-showcase-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Button Groups */
+.ds-button-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+/* Badge Showcase */
+.ds-badge-showcase {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.ds-badge-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.ds-badge-row > *:first-child {
+  min-width: 80px;
+  color: var(--color-text-secondary);
+}
+
+/* Color Grid */
+.ds-color-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-4);
+}
+
+.ds-color-swatch {
+  width: 100%;
+  height: 80px;
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-3);
+  box-shadow: var(--shadow-md);
+}
+
+.ds-color-accent {
+  background: var(--color-accent);
+}
+
+.ds-color-success {
+  background: var(--color-success);
+}
+
+.ds-color-warning {
+  background: var(--color-warning);
+}
+
+.ds-color-error {
+  background: var(--color-error);
+}
+
+.ds-color-info {
+  background: var(--color-info);
+}
+
+/* Principles Grid */
+.ds-principles-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+}
+
+@media (min-width: 768px) {
+  .ds-principles-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .ds-principles-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Footer */
+.ds-footer {
+  margin-top: var(--space-32);
+  padding: var(--space-12) 0;
+  border-top: 0.5px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+  .design-system {
+    padding: var(--space-6) var(--space-3);
+  }
+
+  .ds-hero {
+    padding: var(--space-16) 0 var(--space-12) 0;
+  }
+
+  .ds-section {
+    margin-bottom: var(--space-16);
+  }
+}

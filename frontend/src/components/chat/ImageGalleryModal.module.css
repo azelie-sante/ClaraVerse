@@ -1,0 +1,282 @@
+/**
+ * ImageGalleryModal Styles
+ *
+ * Fullscreen mobile-friendly image gallery with swipe support
+ */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100000; /* Very high z-index to ensure it's above everything including command center */
+  background: rgba(0, 0, 0, 0.95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Header */
+.header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), transparent);
+  z-index: 10;
+}
+
+.counter {
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  backdrop-filter: blur(8px);
+}
+
+.headerActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.headerButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    transform 0.1s;
+  backdrop-filter: blur(8px);
+}
+
+.headerButton:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.headerButton:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.headerButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.closeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    transform 0.1s;
+  backdrop-filter: blur(8px);
+  margin-left: 8px;
+}
+
+.closeButton:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.closeButton:active {
+  transform: scale(0.95);
+}
+
+/* Image Container */
+.imageContainer {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  overflow: hidden;
+  touch-action: pan-x pan-y pinch-zoom;
+}
+
+.imageWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  touch-action: none;
+}
+
+.imageWrapper:active {
+  cursor: grabbing;
+}
+
+.image {
+  max-width: 95vw;
+  max-height: 90vh;
+  object-fit: contain;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+/* Navigation Buttons */
+.navButton {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    opacity 0.2s,
+    transform 0.1s;
+  z-index: 10;
+  backdrop-filter: blur(8px);
+}
+
+.navButton:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.navButton:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.navPrev {
+  left: 16px;
+}
+
+.navNext {
+  right: 16px;
+}
+
+/* Hide nav buttons on mobile - use swipe instead */
+@media (max-width: 768px) {
+  .navButton {
+    display: none;
+  }
+}
+
+/* Dots Indicator */
+.dotsContainer {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 20px;
+  backdrop-filter: blur(8px);
+  z-index: 10;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    transform 0.2s;
+}
+
+.dot:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.dotActive {
+  background: white;
+  transform: scale(1.2);
+}
+
+/* Caption */
+.caption {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  font-size: 14px;
+  text-align: center;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 8px;
+  max-width: 80%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
+  z-index: 10;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .header {
+    padding: 8px 12px;
+    padding-top: max(8px, env(safe-area-inset-top));
+  }
+
+  .headerButton {
+    width: 36px;
+    height: 36px;
+  }
+
+  .closeButton {
+    width: 40px;
+    height: 40px;
+  }
+
+  .counter {
+    font-size: 13px;
+    padding: 4px 10px;
+  }
+
+  .dotsContainer {
+    bottom: max(60px, calc(60px + env(safe-area-inset-bottom)));
+  }
+
+  .caption {
+    bottom: max(16px, calc(16px + env(safe-area-inset-bottom)));
+    font-size: 13px;
+  }
+
+  .image {
+    max-height: 85vh;
+  }
+}
+
+/* Handle notch on iPhone */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .header {
+    padding-top: calc(12px + env(safe-area-inset-top));
+  }
+}

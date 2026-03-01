@@ -1,0 +1,78 @@
+# ============================================================================
+# ClaraVerse OSS .gitignore
+# ============================================================================
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# Production internal (not for OSS)
+production/
+dev-production*.sh
+
+# Build outputs
+dist/
+build/
+node_modules/
+
+# Go backend
+backend/server
+backend/main
+backend/tmp/
+backend/logs/
+backend/data/
+backend/secure_files/
+backend/generated/
+
+# IDE & editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Claude Code / Agent tooling
+.claude/
+.agentvibes/
+_bmad/
+_bmad*/
+.claude.env.production
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Data files (don't commit raw data)
+*.csv
+*.xlsx
+*.xls
+*.pdf
+*.docx
+*.doc
+*.pptx
+*.ppt
+*.odt
+*.odp
+
+# Backups
+*.archive
+*.backup
+backups/
+
+# Misc
+__pycache__/
+comfyui
+frontend/nginx.conf
+.github/copilot-instructions.md
+.mcp.json
+backend/mcp-bridge/cookies.txt
+backend/mcp-bridge/bin/clara_companion-*
+backend/mcp-bridge/bin/claraverse-companion
+backend/mcp-bridge/bin/mcp-client*
+backend/mcp-bridge/clara_companion
+backend/providerss.json
+*.test

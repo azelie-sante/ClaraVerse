@@ -1,0 +1,116 @@
+# ClaraVerse -- Full Reference for LLMs
+
+> ClaraVerse is a self-hosted, open-source AI workspace combining chat, task management, workflow automation, scheduling, 150+ integrations, and MCP bridge support. Built with React 19 + Go, deployed via Docker Compose.
+
+## Product Overview
+
+ClaraVerse is not a chatbot. It is a complete AI workspace. Users self-host it on their own infrastructure, connect AI providers (OpenAI, Anthropic, Google, Ollama, or any OpenAI-compatible endpoint), and get a full platform for AI-powered work.
+
+Key differentiators:
+- Workspace, not chatbot: Chat + Tasks + Workflows + Scheduling + Integrations in one platform
+- Self-hosted and private: Zero-knowledge architecture, conversations in browser IndexedDB
+- Nexus: Trello-like Kanban board where AI is your team (novel concept)
+- 150+ built-in integrations with no MCP required
+- MCP Bridge (Clara Companion) for connecting local tools over WebSocket
+
+## Detailed Feature Reference
+
+### Chat with Skills
+Clara is an AI assistant with auto-activating skills. Skills include web search (via SearXNG), image generation, data analysis, code execution, and document tools (PDF, PPT, CSV). Skills activate based on context -- no manual toggling. Supports multi-provider model selection per conversation. Human-in-the-loop via visual clarifying questions (dropdowns, checkboxes, image selectors). All conversations stored locally in browser IndexedDB.
+
+Access: Sidebar → Chat
+
+### Nexus -- AI Task Management
+A Trello-like Kanban board where AI is your team. Assign Clara long-running tasks (research, coding, data analysis). Tasks flow through columns: Draft → Queued → Working → Done → Failed. Click any task card to see the full execution log. Group tasks into Projects. Clara uses 150+ integrations while working. Multi-step reasoning breaks complex requests into subtasks.
+
+Access: Sidebar → Nexus
+
+### Visual Workflow Builder
+Drag-and-drop automation builder. Node types: Trigger, AI/LLM, Integration, Transform, Condition, Code. Supports parallel execution (branches run concurrently), cron scheduling, API triggers (expose as HTTP endpoint), 150+ integrations, version history, conditional logic. AI-assisted generation: describe workflow in plain text and Clara builds the node graph.
+
+Access: Sidebar → Agents → + button
+
+### Routines -- Scheduled Automations
+Task sequences that run on a schedule. Describe what Clara should do in natural language, set schedule (daily, weekly, custom cron), choose Telegram as reporting channel. Routines use integrations and execute multi-step task sequences.
+
+Access: Sidebar → Nexus → Routines tab
+
+### Channels -- Telegram Integration
+Connect a Telegram bot to chat with Clara from your phone. Receive routine reports and Nexus task notifications. One bot per user for privacy. Same skills and integrations as web app.
+
+Setup: Settings → Channels → paste Telegram bot token → Connect
+
+### 150+ Built-in Integrations
+Slack, Discord, Telegram, Microsoft Teams, Jira, Linear, Asana, Trello, Notion, GitHub, GitLab, Bitbucket, Google Sheets, Google Drive, Google Calendar, Airtable, HubSpot, Salesforce, Mailchimp, Shopify, Stripe, Mixpanel, PostHog, Google Analytics, AWS S3, Google Cloud Storage, MongoDB, Redis, PostgreSQL, MySQL, Twilio, SendGrid, Zapier Webhooks, custom HTTP, and more.
+
+Setup: Settings → Integrations → enter credentials → Save. Available across Chat, Workflows, Nexus, and Routines.
+
+### Clara Companion -- MCP Bridge
+Go CLI bridging local MCP servers to ClaraVerse over WebSocket. Default servers: filesystem, git, memory (via npx). Install: `claraverse companion`. Login: `clara_companion login`. Start: `clara_companion`. Supports macOS (launchd), Linux (systemd), Windows (manual). Config: ~/.claraverse/mcp-config.yaml.
+
+### Artifacts
+AI-generated interactive content rendered inline: images, charts, mini-apps, games, HTML/CSS/JS previews. No special syntax needed -- just ask Clara to create something visual.
+
+### Memory System
+Clara remembers context across conversations and auto-archives old memories. Toggle on/off and clear in Settings → AI Configuration.
+
+### Devices
+Connect multiple machines with Clara Companion. Each device registers and is manageable from Settings → Devices tab. Rename, revoke access, see connection status.
+
+### Local AI Support
+Use Ollama or LM Studio by adding them as providers in Settings → Providers. Enter name, base URL, and API key (if needed).
+
+### Browser-Local Storage
+Conversations stored in IndexedDB in the browser. Zero-knowledge architecture -- the server never stores chat history. Optional encrypted sync to MongoDB.
+
+### Multi-Provider Support
+OpenAI (GPT-4o, GPT-4.1), Anthropic (Claude Opus, Sonnet), Google (Gemini Pro, Flash), Ollama (Llama, Mistral, Qwen), any OpenAI-compatible endpoint (LM Studio, vLLM). Switch providers per conversation.
+
+### Admin Panel
+User management (GDPR-compliant anonymized data), provider configuration, model management, usage analytics. Dashboard stats: Total Users, Active Chats, Total Messages, API Calls Today, Active Providers, Total Models.
+
+## Technical Architecture
+
+| Component | Technology |
+|-----------|-----------|
+| Frontend | React 19 + TypeScript + Vite 7 + Tailwind CSS 4 |
+| Backend | Go (Fiber framework) |
+| Databases | MongoDB (data), MySQL (providers, models), Redis (jobs, pub/sub) |
+| Search | SearXNG (self-hosted, private) |
+| Deployment | Docker Compose (6 services) |
+| MCP Bridge | Go CLI, WebSocket, cross-platform binaries |
+
+## Installation
+
+Prerequisites: Docker, Docker Compose, Git.
+
+```bash
+git clone https://github.com/claraverse-space/ClaraVerse.git
+cd ClaraVerse
+cp .env.example .env
+# Generate secrets: openssl rand -hex 32
+# Edit .env with your secrets and provider API keys
+docker compose up -d
+```
+
+Access at http://localhost:3000.
+
+## Environment Variables
+
+Key variables (in .env):
+- OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_AI_API_KEY -- AI provider keys
+- JWT_SECRET -- authentication secret
+- MONGODB_URI -- MongoDB connection string
+- MYSQL_DSN -- MySQL connection string
+- REDIS_URL -- Redis connection string
+- SEARXNG_URL -- SearXNG instance URL
+- COMPOSIO_API_KEY -- Composio integration key
+
+## Links
+
+- Website: https://claraverse-docs.netlify.app
+- GitHub: https://github.com/claraverse-space/ClaraVerse
+- Documentation: https://claraverse-docs.netlify.app/docs/intro
+- Blog: https://claraverse-docs.netlify.app/blog
+- License: AGPL-3.0
+- Created by: badboysm890 and aruntemme

@@ -1,0 +1,125 @@
+/* MermaidRenderer Styles */
+
+.mermaidContainer {
+  width: 100%;
+  height: 100%;
+  flex: 1; /* Take available space in flex container */
+  min-height: 0; /* Critical for flexbox overflow */
+  overflow: hidden;
+  overscroll-behavior: contain; /* Prevent scroll chaining to parent */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Hide Mermaid's default error rendering */
+.mermaidContainer :global(.error-icon),
+.mermaidContainer :global(.error-text),
+.mermaidContainer :global(g.error-icon),
+.mermaidContainer :global(g.error-text) {
+  display: none !important;
+}
+
+.diagramWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 100%;
+  min-height: 100%;
+}
+
+.diagramWrapper svg {
+  display: block;
+  max-width: none !important;
+  height: auto;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  width: 100%;
+  min-height: 200px;
+  padding: var(--space-6);
+  color: var(--color-text-secondary);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(233, 30, 99, 0.2);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 200px;
+  padding: var(--space-6);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-md);
+  color: #ef4444;
+  text-align: center;
+}
+
+.error p {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.error span {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  max-width: 400px;
+}
+
+.errorDetails {
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: var(--radius-md);
+  max-width: 600px;
+  text-align: left;
+}
+
+.errorDetails summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-2);
+}
+
+.errorDetails summary:hover {
+  color: var(--color-accent);
+}
+
+.errorDetails pre {
+  margin: 0;
+  padding: var(--space-3);
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--color-text-primary);
+  overflow-x: auto;
+  max-height: 200px;
+}

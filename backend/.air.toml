@@ -1,0 +1,77 @@
+# Air configuration for Go hot reload
+# https://github.com/air-verse/air
+
+root = "."
+testdata_dir = "testdata"
+tmp_dir = "tmp"
+
+[build]
+  # Build arguments
+  args_bin = []
+  # Binary output
+  bin = "./tmp/main"
+  # Build command
+  cmd = "go build -o ./tmp/main ./cmd/server"
+  # Build delay after file change
+  delay = 1000
+  # Directories to exclude from watching
+  exclude_dir = ["assets", "tmp", "vendor", "testdata", "node_modules", "mcp_workspace"]
+  # Files to exclude
+  exclude_file = []
+  # Regex to exclude
+  exclude_regex = ["_test.go", ".*_test\\.go"]
+  # Exclude unchanged files
+  exclude_unchanged = false
+  # Follow symlinks
+  follow_symlink = false
+  # Source directory
+  full_bin = ""
+  # File extensions to watch
+  include_ext = ["go", "tpl", "tmpl", "html", "json"]
+  # Additional directories to watch
+  include_dir = []
+  # Additional files to watch
+  include_file = []
+  # Kill delay
+  kill_delay = "0s"
+  # Log output
+  log = "build-errors.log"
+  # Poll interval (0 = use fsnotify)
+  # Enable polling for Docker volume mounts (fsnotify doesn't work reliably)
+  poll = true
+  poll_interval = 500
+  # Post build command
+  post_cmd = []
+  # Pre build command
+  pre_cmd = []
+  # Rerun on change
+  rerun = false
+  rerun_delay = 500
+  # Send interrupt signal
+  send_interrupt = false
+  # Stop on error
+  stop_on_error = false
+
+[color]
+  # Customize colors
+  app = ""
+  build = "yellow"
+  main = "magenta"
+  runner = "green"
+  watcher = "cyan"
+
+[log]
+  # Log main only
+  main_only = false
+  # Show log time
+  time = false
+
+[misc]
+  # Clean on exit
+  clean_on_exit = false
+
+[screen]
+  # Clear screen on rebuild
+  clear_on_rebuild = true
+  # Keep scroll
+  keep_scroll = true

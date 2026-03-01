@@ -1,0 +1,104 @@
+{
+  "success": true,
+  "workflow": {
+    "id": "a3b8687b-4981-4fc7-a12f-71452b094e43",
+    "agent_id": "3d53356c-c1bf-485d-a87b-b2c20dc59d26",
+    "blocks": [
+      {
+        "id": "start",
+        "normalizedId": "start",
+        "type": "variable",
+        "name": "Start",
+        "description": "Input pin code for gym search",
+        "config": {
+          "defaultValue": "10001",
+          "operation": "read",
+          "variableName": "input"
+        },
+        "position": {
+          "x": 250,
+          "y": 50
+        },
+        "timeout": 30
+      },
+      {
+        "id": "gym-researcher",
+        "normalizedId": "gym-researcher",
+        "type": "llm_inference",
+        "name": "Gym Researcher",
+        "description": "Search for gyms in the given pin code",
+        "config": {
+          "enabledTools": [
+            "search_web"
+          ],
+          "outputFormat": "json",
+          "outputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "gyms": {
+                "items": {
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "phoneNumber": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "phoneNumber"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "searchedAt": {
+                "type": "string"
+              },
+              "totalResults": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "gyms",
+              "totalResults",
+              "searchedAt"
+            ],
+            "type": "object"
+          },
+          "requireToolUsage": true,
+          "requiredTools": [
+            "search_web"
+          ],
+          "systemPrompt": "Search for gyms in the provided pin code. Call search_web with a query like 'gyms in [pin code]' and gather 100 gym names and their phone numbers. Return the results EXACTLY in the output schema format with gym name and phone number pairs.",
+          "temperature": 0.3,
+          "userPrompt": "{{input}}"
+        },
+        "position": {
+          "x": 250,
+          "y": 200
+        },
+        "timeout": 120
+      }
+    ],
+    "connections": [
+      {
+        "id": "conn-1",
+        "sourceBlockId": "start",
+        "sourceOutput": "output",
+        "targetBlockId": "gym-researcher",
+        "targetInput": "input"
+      }
+    ],
+    "variables": [],
+    "version": 1,
+    "created_at": "0001-01-01T00:00:00Z",
+    "updated_at": "0001-01-01T00:00:00Z"
+  },
+  "explanation": "2 blocks: Start (pin code input) \u2192 Gym Researcher (searches for gyms and extracts names and phone numbers)",
+  "action": "create",
+  "version": 1,
+  "suggested_name": "Gym Contact Hunter",
+  "suggested_description": "Finds gym names and phone numbers by pin code."
+}

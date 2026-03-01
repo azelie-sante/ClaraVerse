@@ -1,0 +1,225 @@
+/* Usage Section Styles */
+.usage-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  width: 100%;
+}
+
+/* Header */
+.usage-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.usage-title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.usage-main-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: #ededed;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.usage-subtitle {
+  font-size: 0.9375rem;
+  color: #a1a1aa;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Loading & Error States */
+.usage-loading,
+.usage-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 3rem;
+  text-align: center;
+}
+
+.usage-loading p {
+  color: var(--text-secondary, #a1a1aa);
+}
+
+.usage-error .alert {
+  margin-bottom: 1rem;
+}
+
+/* Usage Groups */
+.usage-group {
+  margin-bottom: 0.5rem;
+}
+
+.usage-group-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary, #e4e4e7);
+  margin-bottom: 1rem;
+}
+
+.usage-group-items {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Usage Item Row */
+.usage-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.usage-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.usage-item-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.usage-item-label {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-primary, #e4e4e7);
+}
+
+.usage-item-reset {
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #71717a);
+}
+
+.usage-item-value {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-secondary, #a1a1aa);
+  font-variant-numeric: tabular-nums;
+}
+
+.usage-item-value.unlimited {
+  color: #34d399; /* Green for unlimited */
+  font-weight: 600;
+}
+
+/* Progress Bar Container */
+.usage-progress-container {
+  width: 100%;
+}
+
+.usage-progress-bar {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.usage-progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition:
+    width 0.3s ease,
+    background 0.3s ease;
+}
+
+/* Progress bar color variants */
+.usage-progress-fill.progress-safe {
+  background: linear-gradient(135deg, #e91e63 0%, #f06292 100%);
+}
+
+.usage-progress-fill.progress-warning {
+  background: linear-gradient(135deg, #fbbf24 0%, #fcd34d 100%);
+}
+
+.usage-progress-fill.progress-critical {
+  background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+}
+
+/* Divider between groups */
+.usage-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 1rem 0;
+}
+
+/* Footer */
+.usage-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary, #71717a);
+  font-size: 0.875rem;
+}
+
+.usage-refresh-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary, #71717a);
+  cursor: pointer;
+  border-radius: 4px;
+  transition:
+    color 0.2s,
+    background 0.2s;
+}
+
+.usage-refresh-btn:hover {
+  color: var(--text-primary, #e4e4e7);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.usage-refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.usage-refresh-btn.refreshing svg {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .usage-section {
+    gap: 1.5rem;
+  }
+
+  .usage-item-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .usage-item-value {
+    align-self: flex-end;
+    margin-top: -1.5rem;
+  }
+}

@@ -1,0 +1,121 @@
+.container {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-elevated);
+}
+
+.title {
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+  text-transform: capitalize;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.actionButton:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.table th {
+  background: var(--color-surface-elevated);
+  color: var(--color-text-primary);
+  font-weight: var(--font-medium);
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.headerCell {
+  min-width: 80px;
+}
+
+.rowNumber {
+  width: 40px;
+  min-width: 40px;
+  text-align: center;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-xs);
+  background: var(--color-surface-elevated);
+  border-right: 1px solid var(--color-border);
+}
+
+.row {
+  transition: background var(--transition-fast);
+}
+
+.row:hover {
+  background: var(--color-surface-hover);
+}
+
+.row:not(:last-child) .cell,
+.row:not(:last-child) .rowNumber {
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.cell {
+  padding: var(--space-2) var(--space-3);
+  color: var(--color-text-secondary);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.footer {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  background: var(--color-surface-elevated);
+  border-top: 1px solid var(--color-border);
+  text-align: center;
+}

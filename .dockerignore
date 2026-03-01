@@ -1,0 +1,65 @@
+# Git
+.git
+.gitignore
+.gitattributes
+.github
+
+# Documentation
+docs/
+*.md
+!frontend/README.md
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Node modules (frontend installs its own in build stage)
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+
+# Backend build artifacts
+backend/tmp/
+backend/main
+backend/*.db
+backend/*.db-shm
+backend/*.db-wal
+backend/uploads/
+backend/logs/
+backend/generated/
+backend/secure_files/
+backend/providers.json
+backend/providerss.json
+
+# MCP bridge binaries
+backend/mcp-bridge/bin/
+backend/mcp-bridge/clara_companion
+backend/mcp-bridge/mcp_workspace/
+
+# Test files
+backend/**/*_test.go
+backend/tests/
+backend/scripts/benchmark-results/
+
+# Docker files (don't include in context)
+docker-compose*.yml
+docker/
+
+# CLI binaries
+cli/claraverse
+
+# Misc
+*.log
+*.tmp
+coverage/
+.nyc_output/
+.claude/

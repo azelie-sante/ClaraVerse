@@ -1,0 +1,258 @@
+/* Plan Change Modal Styles */
+.plan-change-modal {
+  padding: 0.5rem 0;
+}
+
+.plan-modal-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  gap: 1rem;
+}
+
+.plan-modal-loading p {
+  color: var(--text-secondary, #a1a1aa);
+}
+
+/* Plan Comparison */
+.plan-comparison {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.plan-compare-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.compare-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #71717a);
+}
+
+.compare-plan-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary, #e4e4e7);
+  margin: 0;
+}
+
+.compare-price {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-secondary, #a1a1aa);
+}
+
+.plan-compare-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(139, 92, 246, 0.2);
+  color: var(--accent-color, #8b5cf6);
+  flex-shrink: 0;
+}
+
+/* Change Details */
+.plan-change-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.change-info {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 10px;
+}
+
+.upgrade-info {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.upgrade-info .change-info-icon {
+  color: #10b981;
+}
+
+.downgrade-info {
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+}
+
+.downgrade-info .change-info-icon {
+  color: #fbbf24;
+}
+
+.change-info-icon {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 2px;
+  flex-shrink: 0;
+}
+
+.change-info-content {
+  flex: 1;
+}
+
+.change-info-content h5 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary, #e4e4e7);
+  margin: 0 0 0.5rem;
+}
+
+.change-info-content p {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #a1a1aa);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.proration-amount,
+.effective-date {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.875rem;
+}
+
+.proration-amount span,
+.effective-date span {
+  color: var(--text-secondary, #a1a1aa);
+}
+
+.proration-amount strong {
+  color: #10b981;
+  font-weight: 600;
+}
+
+.effective-date strong {
+  color: var(--text-primary, #e4e4e7);
+  font-weight: 600;
+}
+
+/* Downgrade Warning */
+.downgrade-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 8px;
+  color: #fca5a5;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.downgrade-warning svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #ef4444;
+}
+
+/* Feature Comparison */
+.feature-comparison {
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 10px;
+}
+
+.feature-comparison h5 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary, #e4e4e7);
+  margin: 0 0 0.75rem;
+}
+
+.feature-diff {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.feature-diff-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.feature-diff-item:last-child {
+  border-bottom: none;
+}
+
+.diff-label {
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #a1a1aa);
+}
+
+.diff-change {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary, #e4e4e7);
+}
+
+/* Modal Footer */
+.plan-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+/* Animation */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .plan-comparison {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .plan-compare-arrow {
+    transform: rotate(90deg);
+  }
+
+  .plan-modal-footer {
+    flex-direction: column;
+  }
+
+  .plan-modal-footer button {
+    width: 100%;
+  }
+}

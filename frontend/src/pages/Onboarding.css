@@ -1,0 +1,122 @@
+.onboarding-container {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  background: var(--color-background);
+}
+
+/* Left side: Single image (60%) */
+.onboarding-left {
+  flex: 0 0 60%;
+  width: 60%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: var(--color-background);
+}
+
+.onboarding-image-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.onboarding-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 2rem;
+  object-fit: cover;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+/* Right side: Auth Form (40%) */
+.onboarding-auth {
+  flex: 0 0 40%;
+  width: 40%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-background);
+  position: relative;
+  overflow-y: auto;
+}
+
+/* Subtle gradient overlay on the auth side */
+.onboarding-auth::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+/* Override AuthForm container styles for embedded use */
+.onboarding-auth .auth-form-container {
+  min-height: auto;
+  padding: var(--space-1);
+  background: transparent;
+  width: 80%;
+}
+
+.onboarding-auth .auth-form-content {
+  max-width: 100%;
+  padding: var(--space-3);
+  width: 100%;
+}
+
+/* Tablet: Stack vertically */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .onboarding-container {
+    flex-direction: column;
+  }
+
+  .onboarding-left {
+    flex: 0 0 auto;
+    width: 100%;
+    height: 40vh;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+    padding: var(--space-6);
+  }
+
+  .onboarding-image-container {
+    max-width: 400px;
+  }
+
+  .onboarding-auth {
+    flex: 1;
+    width: 100%;
+    height: auto;
+    min-height: 60vh;
+  }
+}
+
+/* Mobile: Show only auth form */
+@media (max-width: 768px) {
+  .onboarding-container {
+    flex-direction: column;
+  }
+
+  .onboarding-left {
+    display: none;
+  }
+
+  .onboarding-auth {
+    flex: 1;
+    width: 100%;
+    height: 100vh;
+    padding: var(--space-4);
+  }
+
+  .onboarding-auth .auth-form-container {
+    padding: var(--space-2);
+  }
+}
