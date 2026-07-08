@@ -681,7 +681,8 @@ func (h *WebSocketHandler) handleChatMessage(userConn *models.UserConnection, cl
 		}
 	}
 
-	// Stream response
+	// Stream response. Reset per-turn recovery guards for this fresh turn.
+	userConn.ContextTrimRetries = 0
 	go func() {
 		if err := h.chatService.StreamChatCompletion(userConn); err != nil {
 			log.Printf("❌ Chat completion error: %v", err)

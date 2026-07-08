@@ -2183,6 +2183,19 @@ func (s *ChatService) StreamChatCompletion(userConn *models.UserConnection) erro
 			return s.StreamChatCompletion(userConn)
 		}
 
+		// Context-length overflow: a long, tool-heavy chat grows past the model's
+		// window. Bubbling the raw 400 leaves a blank bubble and the frontend
+		// then auto-retries the same over-limit request. Drop the oldest turns
+		// and retry so the user still gets an answer.
+		if s.isContextLengthError(errorMsg) {
+			if userConn.ContextTrimRetries < 3 && s.trimOldestTurnsForContext(userConn) {
+				userConn.ContextTrimRetries++
+				log.Printf("✂️  [CONTEXT] Context length exceeded — retrying after trim (attempt %d) for %s", userConn.ContextTrimRetries, userConn.ConversationID)
+				return s.StreamChatCompletion(userConn)
+			}
+			return fmt.Errorf("This conversation is too long for the current model's context window. Please start a new chat, or switch to a model with a larger context window, to continue")
+		}
+
 		// Report health failure
 		if s.healthService != nil && config.ProviderID > 0 {
 			if health.IsQuotaError(resp.StatusCode, errorMsg) {
@@ -2219,6 +2232,49 @@ func (s *ChatService) emitAssistantFallback(userConn *models.UserConnection, tex
 	userConn.WriteChan <- models.ServerMessage{Type: "stream_chunk", Content: text, ConversationID: userConn.ConversationID}
 	s.streamBuffer.MarkComplete(userConn.ConversationID, text)
 	userConn.WriteChan <- models.ServerMessage{Type: "stream_end", ConversationID: userConn.ConversationID}
+}
+
+// isContextLengthError detects a provider "context window exceeded" error so the
+// chat service can trim old turns and retry instead of leaving a blank bubble.
+func (s *ChatService) isContextLengthError(errorMsg string) bool {
+	m := strings.ToLower(errorMsg)
+	return strings.Contains(m, "maximum context length") ||
+		strings.Contains(m, "context length exceeded") ||
+		strings.Contains(m, "context_length_exceeded") ||
+		strings.Contains(m, "reduce the length") ||
+		strings.Contains(m, "too many tokens") ||
+		strings.Contains(m, "string too long") ||
+		(strings.Contains(m, "context") && strings.Contains(m, "token") && strings.Contains(m, "exceed"))
+}
+
+// trimOldestTurnsForContext drops the oldest ~half of the conversation's turns
+// from the in-memory cache so an over-long history fits the model's window. It
+// only ever cuts on a USER-message boundary, so assistant/tool-call/tool-result
+// sequences stay intact and API alternation rules aren't broken. Returns false
+// when there is nothing older than the current turn to drop.
+func (s *ChatService) trimOldestTurnsForContext(userConn *models.UserConnection) bool {
+	msgs := s.getConversationMessages(userConn.ConversationID)
+	userIdx := make([]int, 0, len(msgs))
+	for i, m := range msgs {
+		if r, _ := m["role"].(string); r == "user" {
+			userIdx = append(userIdx, i)
+		}
+	}
+	if len(userIdx) < 2 {
+		return false
+	}
+	cutTurn := len(userIdx) / 2
+	if cutTurn > len(userIdx)-2 {
+		cutTurn = len(userIdx) - 2
+	}
+	if cutTurn < 1 {
+		cutTurn = 1
+	}
+	trimmed := msgs[userIdx[cutTurn]:]
+	s.setConversationMessages(userConn.ConversationID, trimmed)
+	log.Printf("✂️  [CONTEXT] Trimmed conversation %s: %d → %d messages (dropped %d oldest turn(s))",
+		userConn.ConversationID, len(msgs), len(trimmed), cutTurn)
+	return true
 }
 
 // detectToolIncompatibility checks if an error message indicates tool incompatibility

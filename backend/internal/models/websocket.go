@@ -157,6 +157,10 @@ type UserConnection struct {
 	ConversationID     string
 	Messages           []map[string]interface{}
 	MessageCount       int              // Track number of messages for title generation
+	// ContextTrimRetries bounds in-turn recovery from a provider "maximum
+	// context length" error: the chat service drops the oldest turns and retries
+	// rather than leaving the user with a blank bubble. Reset at each turn start.
+	ContextTrimRetries int
 	ModelID            string           // Selected model ID from platform
 	CustomConfig       *CustomAPIConfig // OR user's custom API configuration (BYOK)
 	SystemInstructions string           // Optional: User-provided system prompt override
