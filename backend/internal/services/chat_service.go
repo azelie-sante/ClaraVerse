@@ -2207,6 +2207,20 @@ func (s *ChatService) StreamChatCompletion(userConn *models.UserConnection) erro
 	return s.processStream(resp.Body, userConn, config.Model)
 }
 
+// emitAssistantFallback surfaces a visible assistant message and terminates the
+// stream cleanly, so a turn that would otherwise end with a blank bubble (a
+// post-tool continuation error, invalid tool calls, or empty model output)
+// gets a real message instead. Sending content rather than only an error event
+// also avoids the frontend re-running the whole turn (and its tool side effects).
+func (s *ChatService) emitAssistantFallback(userConn *models.UserConnection, text string) {
+	msgs := s.getConversationMessages(userConn.ConversationID)
+	msgs = append(msgs, map[string]interface{}{"role": "assistant", "content": text})
+	s.setConversationMessages(userConn.ConversationID, msgs)
+	userConn.WriteChan <- models.ServerMessage{Type: "stream_chunk", Content: text, ConversationID: userConn.ConversationID}
+	s.streamBuffer.MarkComplete(userConn.ConversationID, text)
+	userConn.WriteChan <- models.ServerMessage{Type: "stream_end", ConversationID: userConn.ConversationID}
+}
+
 // detectToolIncompatibility checks if an error message indicates tool incompatibility
 func (s *ChatService) detectToolIncompatibility(errorMsg string) bool {
 	errorLower := strings.ToLower(errorMsg)
@@ -2644,21 +2658,41 @@ func (s *ChatService) processStream(reader io.Reader, userConn *models.UserConne
 			// Clear buffer for tool calls - a new stream will start
 			s.streamBuffer.ClearBuffer(userConn.ConversationID)
 
-			// After ALL tools complete, continue conversation ONCE
+			// After ALL tools complete, continue conversation ONCE. The
+			// continuation runs in its own goroutine, so a returned error (or a
+			// panic on a late send) would otherwise be discarded, leaving the UI
+			// hung on "Generating…" or a blank bubble. Recover, and on failure
+			// surface a real message instead of nothing.
 			log.Printf("🔄 [TOOL] All tools executed, continuing conversation with %d tool result(s)", len(toolCallMessages))
-			go s.StreamChatCompletion(userConn)
+			go func() {
+				defer func() {
+					if r := recover(); r != nil {
+						log.Printf("❌ [TOOL-LOOP] Recovered from panic in continuation for %s: %v", userConn.ConnID, r)
+					}
+				}()
+				if err := s.StreamChatCompletion(userConn); err != nil {
+					log.Printf("❌ [TOOL-LOOP] Continuation failed for %s: %v", userConn.ConnID, err)
+					s.emitAssistantFallback(userConn, "I ran the tools but hit a problem writing the final answer, so this response is incomplete. Please try again — rephrasing or switching the model usually helps.")
+				}
+			}()
 		} else {
-			// No valid tool calls - treat as error
+			// Model tried to call tools but the calls were malformed. Surface a
+			// visible message instead of a bare error + blank bubble.
 			log.Printf("⚠️  [STREAM] Tool calls detected but none were valid")
-			userConn.WriteChan <- models.ServerMessage{
-				Type:         "error",
-				ErrorCode:    "invalid_tool_calls",
-				ErrorMessage: "The model attempted to call tools but the calls were invalid. Please try again.",
-			}
+			s.emitAssistantFallback(userConn, "I tried to use a tool but the request came out malformed, so I couldn't complete that. Please try again — rephrasing usually fixes it.")
 		}
 	} else {
 		// Regular message without tool calls
 		content := fullContent.String()
+
+		// Empty-turn guard: the model produced no content AND no tool calls.
+		// Never leave the user with a blank bubble or a hung stream — emit an
+		// honest fallback + a terminal event.
+		if strings.TrimSpace(content) == "" {
+			log.Printf("⚠️  [STREAM] Empty assistant turn for %s (no content, no tool calls) — emitting fallback", userConn.ConversationID)
+			s.emitAssistantFallback(userConn, "I couldn't generate a response just now — this sometimes happens right after a tool runs or when the model returns nothing. Please try again; rephrasing or switching the model usually fixes it.")
+			return nil
+		}
 
 		// Only add assistant message if there's actual content
 		if content != "" {
