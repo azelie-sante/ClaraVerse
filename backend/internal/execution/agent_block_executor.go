@@ -2179,35 +2179,66 @@ func (e *AgentBlockExecutor) callLLMWithSchema(
 		requestBody["tools"] = tools
 	}
 
-	bodyBytes, err := json.Marshal(requestBody)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
-	}
-
-	// Create request
 	endpoint := strings.TrimSuffix(provider.BaseURL, "/") + "/chat/completions"
 	log.Printf("🌐 [AGENT-BLOCK] Calling LLM: %s (model: %s, streaming: true)", endpoint, modelID)
 
-	req, err := http.NewRequestWithContext(ctx, "POST", endpoint, bytes.NewReader(bodyBytes))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+	// The current response — closed at return; re-evaluated so a retry that
+	// reassigns it closes the final one exactly once.
+	var resp *http.Response
+	defer func() {
+		if resp != nil {
+			resp.Body.Close()
+		}
+	}()
+
+	// send builds + POSTs the request with the given output-token cap so a model
+	// that rejects too-high max_tokens can be retried with a smaller one.
+	send := func(mt int) error {
+		if isOpenAI {
+			requestBody["max_completion_tokens"] = mt
+		} else {
+			requestBody["max_tokens"] = mt
+		}
+		bodyBytes, err := json.Marshal(requestBody)
+		if err != nil {
+			return fmt.Errorf("failed to marshal request: %w", err)
+		}
+		req, err := http.NewRequestWithContext(ctx, "POST", endpoint, bytes.NewReader(bodyBytes))
+		if err != nil {
+			return fmt.Errorf("failed to create request: %w", err)
+		}
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+provider.APIKey)
+		r, err := e.httpClient.Do(req)
+		resp = r // nil on error — guarded by the deferred close
+		if err != nil {
+			return ClassifyError(err)
+		}
+		return nil
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+provider.APIKey)
-
-	// Execute request
-	resp, err := e.httpClient.Do(req)
-	if err != nil {
-		// Classify network/connection errors for retry logic
-		return nil, ClassifyError(err)
+	if err := send(32768); err != nil {
+		return nil, err
 	}
-	defer resp.Body.Close()
-
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		// Classify HTTP errors for retry logic (429, 5xx are retryable)
-		return nil, ClassifyHTTPError(resp.StatusCode, string(body))
+		// The model rejected max_tokens as too high for its context window (some
+		// shim models cap below 4096, or a big agent prompt leaves little room).
+		// Retry ONCE with a small cap instead of failing the block.
+		if strings.Contains(strings.ToLower(string(body)), "max_tokens") {
+			log.Printf("⚠️ [AGENT-BLOCK] max_tokens rejected by %s, retrying with 1024", modelID)
+			resp.Body.Close()
+			resp = nil
+			if err := send(1024); err != nil {
+				return nil, err
+			}
+			if resp.StatusCode != http.StatusOK {
+				b2, _ := io.ReadAll(resp.Body)
+				return nil, ClassifyHTTPError(resp.StatusCode, string(b2))
+			}
+		} else {
+			return nil, ClassifyHTTPError(resp.StatusCode, string(body))
+		}
 	}
 
 	// Process SSE stream and accumulate response
