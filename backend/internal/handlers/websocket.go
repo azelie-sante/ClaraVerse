@@ -20,6 +20,7 @@ import (
 
 	"github.com/gofiber/contrib/websocket"
 	"github.com/google/uuid"
+	"github.com/xuri/excelize/v2"
 )
 
 // pushFileToSandbox uploads a file into the conversation's persistent E2B
@@ -64,6 +65,51 @@ func pushFileToSandbox(conversationID, filename string, content []byte) (bool, e
 		return false, fmt.Errorf("e2b push HTTP %d", resp.StatusCode)
 	}
 	return true, nil
+}
+
+// buildExcelPreview parses an .xlsx/.xls/.xlsm workbook into a compact, readable
+// text preview: the sheet list plus the first rows of the first non-empty sheet.
+// The inline data-file injection used to dump the raw file bytes as text, which
+// for a binary Excel workbook (a zip archive) surfaced as "PK…" garbage — the
+// model then declared "the file is binary content, not a readable CSV". Parsing
+// it here gives the model a real table to reason about.
+func buildExcelPreview(path string, maxRows int) (string, []string, error) {
+	f, err := excelize.OpenFile(path)
+	if err != nil {
+		return "", nil, err
+	}
+	defer f.Close()
+
+	sheetNames := f.GetSheetList()
+	if len(sheetNames) == 0 {
+		return "", nil, fmt.Errorf("no sheets in workbook")
+	}
+
+	// Pick the first sheet that actually has rows.
+	target := sheetNames[0]
+	var rows [][]string
+	for _, s := range sheetNames {
+		r, e := f.GetRows(s)
+		if e == nil && len(r) > 0 {
+			target, rows = s, r
+			break
+		}
+	}
+
+	var b strings.Builder
+	if len(sheetNames) > 1 {
+		b.WriteString(fmt.Sprintf("Sheets (%d): %v\n", len(sheetNames), sheetNames))
+	}
+	shown := len(rows)
+	if shown > maxRows {
+		shown = maxRows
+	}
+	b.WriteString(fmt.Sprintf("Sheet %q — first %d of %d rows:\n", target, shown, len(rows)))
+	for i := 0; i < shown; i++ {
+		b.WriteString(strings.Join(rows[i], " | "))
+		b.WriteString("\n")
+	}
+	return strings.TrimRight(b.String(), "\n"), sheetNames, nil
 }
 
 // PromptResponse stores a user's response to an interactive prompt
@@ -455,13 +501,40 @@ func (h *WebSocketHandler) handleChatMessage(userConn *models.UserConnection, cl
 					continue
 				}
 
-				// Get first 10 lines as preview
-				lines := strings.Split(string(fileContent), "\n")
-				previewLines := 10
-				if len(lines) < previewLines {
-					previewLines = len(lines)
+				// Build a readable preview. CSV/TSV/text: first lines verbatim.
+				// Excel workbooks are binary (a zip archive) — dumping their raw
+				// bytes as text surfaces "PK…" garbage and the model declares the
+				// file unreadable. Parse xlsx/xls with excelize instead.
+				lowerName := strings.ToLower(att.Filename)
+				isExcel := strings.HasSuffix(lowerName, ".xlsx") ||
+					strings.HasSuffix(lowerName, ".xlsm") ||
+					strings.HasSuffix(lowerName, ".xls") ||
+					strings.Contains(att.MimeType, "spreadsheetml") ||
+					att.MimeType == "application/vnd.ms-excel"
+
+				var preview, previewLabel string
+				if isExcel {
+					if p, sheets, perr := buildExcelPreview(cachedFile.FilePath, 12); perr == nil {
+						preview = p
+						if len(sheets) > 1 {
+							previewLabel = fmt.Sprintf("Parsed Excel preview (%d sheets)", len(sheets))
+						} else {
+							previewLabel = "Parsed Excel preview"
+						}
+					} else {
+						log.Printf("⚠️  [DATA] Excel preview failed for %s: %v", att.Filename, perr)
+						preview = "(binary Excel workbook — do NOT read it as text/CSV; use the read_spreadsheet tool or pandas.read_excel in run_python)"
+						previewLabel = "Excel workbook"
+					}
+				} else {
+					lines := strings.Split(string(fileContent), "\n")
+					n := 10
+					if len(lines) < n {
+						n = len(lines)
+					}
+					preview = strings.Join(lines[:n], "\n")
+					previewLabel = fmt.Sprintf("Preview (first %d lines)", n)
 				}
-				preview := strings.Join(lines[:previewLines], "\n")
 
 				// Push the file into the conversation's persistent E2B
 				// sandbox at /data/<filename>. The sandbox is pooled by
@@ -483,16 +556,19 @@ func (h *WebSocketHandler) handleChatMessage(userConn *models.UserConnection, cl
 				dataFileContext.WriteString(fmt.Sprintf("\n\n[Data File: %s]\n", att.Filename))
 				dataFileContext.WriteString(fmt.Sprintf("File ID: %s\n", att.FileID))
 				dataFileContext.WriteString(fmt.Sprintf("Type: %s | Size: %d bytes\n", att.MimeType, cachedFile.Size))
-				if sandboxPath != "" {
-					dataFileContext.WriteString(fmt.Sprintf("Sandbox path: %s (available in run_python; `pd.read_csv('%s')` will work)\n", sandboxPath, sandboxPath))
+				if isExcel {
+					dataFileContext.WriteString("This is a binary Excel workbook — NEVER read it as text or with pd.read_csv/open(); that yields binary garbage. Use the read_spreadsheet tool or pandas.read_excel.\n")
 				}
-				dataFileContext.WriteString(fmt.Sprintf("\nPreview (first %d lines):\n", previewLines))
+				if sandboxPath != "" {
+					dataFileContext.WriteString(fmt.Sprintf("Sandbox path: %s (available in run_python)\n", sandboxPath))
+				}
+				dataFileContext.WriteString(fmt.Sprintf("\n%s:\n", previewLabel))
 				dataFileContext.WriteString("```\n")
 				dataFileContext.WriteString(preview)
 				dataFileContext.WriteString("\n```\n")
 				dataFileContext.WriteString("---\n")
 
-				log.Printf("📊 Injected data file context: %s (file_id: %s) for %s", att.Filename, att.FileID, userConn.ConnID)
+				log.Printf("📊 Injected data file context: %s (file_id: %s, excel=%v) for %s", att.Filename, att.FileID, isExcel, userConn.ConnID)
 			}
 		}
 
