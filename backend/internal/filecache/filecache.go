@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -140,6 +142,65 @@ func (s *Service) GetFilesForConversation(conversationID string) []*CachedFile {
 	}
 
 	return files
+}
+
+// ResolveByName finds a cached file by its FILENAME (not UUID). Models routinely
+// call read_document/read_data_file/read_spreadsheet with the human filename
+// instead of the upload's UUID file_id, which otherwise misses and reports
+// "file not found". Searches conversation files, then the user's hot cache.
+func (s *Service) ResolveByName(userID, conversationID, name string) *CachedFile {
+	target := strings.ToLower(strings.TrimSpace(name))
+	if target == "" {
+		return nil
+	}
+	base := strings.ToLower(filepath.Base(name))
+	nameMatch := func(f *CachedFile) bool {
+		fn := strings.ToLower(f.Filename)
+		return f.FileID != "" && (fn == target || fn == base || strings.ToLower(filepath.Base(f.Filename)) == base)
+	}
+	owned := func(f *CachedFile) bool { return userID == "" || f.UserID == userID }
+
+	// 1) conversation-scoped
+	if conversationID != "" {
+		for _, f := range s.GetFilesForConversation(conversationID) {
+			if nameMatch(f) && owned(f) {
+				return f
+			}
+		}
+	}
+	// 2) any hot-cache file owned by the user
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	for _, item := range s.cache.Items() {
+		if f, ok := item.Object.(*CachedFile); ok && nameMatch(f) && owned(f) {
+			return f
+		}
+	}
+	return nil
+}
+
+// NewestInConversation returns the most recently uploaded file in a conversation
+// (owned by the user) whose MIME satisfies match. Lets a FOLLOW-UP turn that
+// references a doc/data file by a wrong or forgotten name still resolve to the
+// file the user attached earlier — the frontend doesn't re-send attachments, so
+// only the attach-turn injects the file otherwise.
+func (s *Service) NewestInConversation(userID, conversationID string, match func(mime string) bool) *CachedFile {
+	if conversationID == "" {
+		return nil
+	}
+	var newest *CachedFile
+	for _, f := range s.GetFilesForConversation(conversationID) {
+		if f.FileID == "" || (userID != "" && userID != "anonymous" && f.UserID != userID) {
+			continue
+		}
+		if match != nil && !match(f.MimeType) {
+			continue
+		}
+		if newest == nil || f.UploadedAt.After(newest.UploadedAt) {
+			newest = f
+		}
+	}
+	return newest
 }
 
 // GetConversationFiles returns all file IDs for a conversation

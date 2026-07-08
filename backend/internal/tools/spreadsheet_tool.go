@@ -115,8 +115,25 @@ func executeReadSpreadsheet(args map[string]interface{}) (string, error) {
 		file, _ = fileCacheService.Get(fileID)
 	}
 
+	// Models routinely pass the human FILENAME instead of the UUID file_id, and a
+	// mid-conversation follow-up may reference a file the exact-id lookup misses.
+	// Fall back to filename resolution, then the newest data file in the
+	// conversation — the same fallbacks read_data_file/read_document use.
 	if file == nil {
-		return "", fmt.Errorf("file not found or expired. Files are available for 30 minutes after upload")
+		if f := fileCacheService.ResolveByName(userID, conversationID, fileID); f != nil {
+			log.Printf("📊 [READ-SPREADSHEET] Resolved by filename %q → %s", fileID, f.FileID)
+			file = f
+		}
+	}
+	if file == nil {
+		if f := fileCacheService.NewestInConversation(userID, conversationID, isDataFileMime); f != nil {
+			log.Printf("📊 [READ-SPREADSHEET] %q unresolved → conversation's most recent data file %s (%s)", fileID, f.FileID, f.Filename)
+			file = f
+		}
+	}
+
+	if file == nil {
+		return "", fmt.Errorf("file not found. Please re-upload the spreadsheet and try again")
 	}
 
 	// Determine file type

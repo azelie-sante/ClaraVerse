@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"regexp"
 	"strings"
 
 	"claraverse/internal/e2b"
+	"claraverse/internal/filecache"
 )
 
 // claraLoadCall builds a call to the injected clara_load() helper (see
@@ -146,7 +148,26 @@ func executeDataAnalyst(args map[string]interface{}) (string, error) {
 	if fileID, ok := args["file_id"].(string); ok && fileID != "" {
 		content, name, err := GetUploadedFile(fileID)
 		if err != nil {
-			return "", fmt.Errorf("failed to get uploaded file: %w", err)
+			// The model routinely passes the human FILENAME instead of the UUID,
+			// and a mid-conversation follow-up can reference a file the disk
+			// lookup misses. Fall back to the filecache: resolve by name, then
+			// the newest data file in the conversation.
+			userID, _ := args["__user_id__"].(string)
+			conversationID, _ := args["__conversation_id__"].(string)
+			fc := filecache.GetService()
+			cf := fc.ResolveByName(userID, conversationID, fileID)
+			if cf == nil {
+				cf = fc.NewestInConversation(userID, conversationID, isDataFileMime)
+			}
+			if cf != nil {
+				if b, rerr := os.ReadFile(cf.FilePath); rerr == nil {
+					log.Printf("📊 [ANALYZE-DATA] Resolved %q via filecache → %s (%s)", fileID, cf.FileID, cf.Filename)
+					content, name, err = b, cf.Filename, nil
+				}
+			}
+			if err != nil {
+				return "", fmt.Errorf("file not found. Please re-upload the data file and try again")
+			}
 		}
 		csvData = content
 		filename = name

@@ -10,6 +10,20 @@ import (
 	"strings"
 )
 
+// isDataFileMime reports whether a MIME type is a readable data file (CSV/Excel/
+// JSON/text). Used by the filename/newest-in-conversation fallbacks so a data
+// tool can resolve a file the model referenced by name or on a follow-up turn.
+func isDataFileMime(mime string) bool {
+	switch mime {
+	case "text/csv", "text/plain", "application/json",
+		"application/vnd.ms-excel",
+		"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
+		"text/tab-separated-values":
+		return true
+	}
+	return false
+}
+
 // NewReadDataFileTool creates the read_data_file tool for reading CSV/JSON/text files
 func NewReadDataFileTool() *Tool {
 	return &Tool{
