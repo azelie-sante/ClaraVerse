@@ -7,6 +7,21 @@ import (
 	"log"
 )
 
+// isDocumentMime reports whether a MIME type is a readable document (PDF/Word/
+// PowerPoint). Used by the newest-in-conversation fallback so a follow-up turn
+// resolves to the document the user attached earlier.
+func isDocumentMime(mime string) bool {
+	switch mime {
+	case "application/pdf",
+		"application/vnd.openxmlformats-officedocument.wordprocessingml.document",     // .docx
+		"application/vnd.openxmlformats-officedocument.presentationml.presentation",   // .pptx
+		"application/msword",           // .doc
+		"application/vnd.ms-powerpoint": // .ppt
+		return true
+	}
+	return false
+}
+
 // NewReadDocumentTool creates the read_document tool for reading PDF/DOCX/PPTX files
 func NewReadDocumentTool() *Tool {
 	return &Tool{
@@ -70,9 +85,26 @@ func executeReadDocument(args map[string]interface{}) (string, error) {
 		file, _ = fileCacheService.Get(fileID)
 	}
 
+	// Models routinely pass the human FILENAME instead of the UUID file_id.
+	if file == nil {
+		if f := fileCacheService.ResolveByName(userID, conversationID, fileID); f != nil {
+			log.Printf("📄 [READ-DOCUMENT] Resolved by filename %q → %s", fileID, f.FileID)
+			file = f
+		}
+	}
+	// Follow-up turn: the frontend doesn't re-send the attachment, and the model
+	// often references it by a wrong/forgotten name. Fall back to the most recent
+	// document the user attached in this conversation.
+	if file == nil {
+		if f := fileCacheService.NewestInConversation(userID, conversationID, isDocumentMime); f != nil {
+			log.Printf("📄 [READ-DOCUMENT] %q unresolved → conversation's most recent document %s (%s)", fileID, f.FileID, f.Filename)
+			file = f
+		}
+	}
+
 	if file == nil {
 		log.Printf("❌ [READ-DOCUMENT] File not found: %s", fileID)
-		return "", fmt.Errorf("file not found or has expired. Documents are only available for 30 minutes after upload")
+		return "", fmt.Errorf("file not found — please upload it again")
 	}
 
 	// Validate file type is a document

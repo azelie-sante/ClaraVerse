@@ -114,9 +114,24 @@ func executeReadDataFile(args map[string]interface{}) (string, error) {
 		file, _ = fileCacheService.Get(fileID)
 	}
 
+	// Models routinely pass the human FILENAME instead of the UUID file_id, and a
+	// follow-up turn can reference a file the exact-id lookup misses.
+	if file == nil {
+		if f := fileCacheService.ResolveByName(userID, conversationID, fileID); f != nil {
+			log.Printf("📊 [READ-DATA-FILE] Resolved by filename %q → %s", fileID, f.FileID)
+			file = f
+		}
+	}
+	if file == nil {
+		if f := fileCacheService.NewestInConversation(userID, conversationID, isDataFileMime); f != nil {
+			log.Printf("📊 [READ-DATA-FILE] %q unresolved → conversation's most recent data file %s (%s)", fileID, f.FileID, f.Filename)
+			file = f
+		}
+	}
+
 	if file == nil {
 		log.Printf("❌ [READ-DATA-FILE] File not found: %s", fileID)
-		return "", fmt.Errorf("file not found or has expired. Files are only available for 30 minutes after upload")
+		return "", fmt.Errorf("file not found — please upload it again")
 	}
 
 	// Validate file type is a data file
