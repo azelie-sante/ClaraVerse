@@ -161,6 +161,11 @@ type UserConnection struct {
 	// context length" error: the chat service drops the oldest turns and retries
 	// rather than leaving the user with a blank bubble. Reset at each turn start.
 	ContextTrimRetries int
+	// Tool-loop guardrails (reset at the start of every user turn): bound the
+	// tool loop so a model that loops or repeats the same failing call can't spin
+	// forever and hang the UI.
+	ToolIteration int    // rounds of tool calls executed this turn
+	LastToolSig   string // signature of the previous round's tool calls (no-progress detection)
 	ModelID            string           // Selected model ID from platform
 	CustomConfig       *CustomAPIConfig // OR user's custom API configuration (BYOK)
 	SystemInstructions string           // Optional: User-provided system prompt override

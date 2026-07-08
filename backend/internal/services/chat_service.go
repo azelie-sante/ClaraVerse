@@ -2714,12 +2714,54 @@ func (s *ChatService) processStream(reader io.Reader, userConn *models.UserConne
 			// Clear buffer for tool calls - a new stream will start
 			s.streamBuffer.ClearBuffer(userConn.ConversationID)
 
+			// ── Harness guardrails: never let the tool loop run forever ──
+			// Signature of this round's tool calls (names + args). If it repeats
+			// the previous round, the model is stuck (e.g. retrying a malformed
+			// call) and making no progress.
+			var sigB strings.Builder
+			for _, tc := range toolCallMessages {
+				if fn, ok := tc["function"].(map[string]interface{}); ok {
+					name, _ := fn["name"].(string)
+					argStr, _ := fn["arguments"].(string)
+					sigB.WriteString(name)
+					sigB.WriteString("|")
+					sigB.WriteString(argStr)
+					sigB.WriteString("\n")
+				}
+			}
+			toolSig := sigB.String()
+
+			// Generous backstop so genuinely long, multi-step work is NOT blocked.
+			// Real runaway loops are caught by the anti-stall (identical consecutive
+			// tool call), not by this number — so it can stay high.
+			const maxToolIterations = 20
+			userConn.ToolIteration++
+			stalled := toolSig != "" && toolSig == userConn.LastToolSig
+			if userConn.ToolIteration > maxToolIterations || stalled {
+				reason := fmt.Sprintf("reached the %d-step tool limit", maxToolIterations)
+				if stalled {
+					reason = "kept repeating the same tool call without making progress"
+				}
+				log.Printf("🛑 [TOOL-LOOP] Aborting tool loop for %s: %s (iteration %d)", userConn.ConnID, reason, userConn.ToolIteration)
+				if strings.TrimSpace(fullContent.String()) != "" {
+					userConn.WriteChan <- models.ServerMessage{Type: "stream_chunk", Content: "\n\n", ConversationID: userConn.ConversationID}
+				}
+				userConn.WriteChan <- models.ServerMessage{
+					Type:         "error",
+					ErrorCode:    "tool_loop_aborted",
+					ErrorMessage: fmt.Sprintf("Stopped: the model %s. Try rephrasing, or switch models for this task.", reason),
+				}
+				userConn.WriteChan <- models.ServerMessage{Type: "stream_end", ConversationID: userConn.ConversationID}
+				return nil
+			}
+			userConn.LastToolSig = toolSig
+
 			// After ALL tools complete, continue conversation ONCE. The
 			// continuation runs in its own goroutine, so a returned error (or a
 			// panic on a late send) would otherwise be discarded, leaving the UI
 			// hung on "Generating…" or a blank bubble. Recover, and on failure
 			// surface a real message instead of nothing.
-			log.Printf("🔄 [TOOL] All tools executed, continuing conversation with %d tool result(s)", len(toolCallMessages))
+			log.Printf("🔄 [TOOL] All tools executed, continuing conversation with %d tool result(s) [iteration %d/%d]", len(toolCallMessages), userConn.ToolIteration, maxToolIterations)
 			go func() {
 				defer func() {
 					if r := recover(); r != nil {
