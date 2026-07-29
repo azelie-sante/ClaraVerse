@@ -37,6 +37,7 @@ const ARTIFACT_ICONS: Record<ArtifactType, React.ComponentType<{ size?: number }
   html: FileCode,
   svg: Image,
   mermaid: GitBranch,
+  react: Code,
   image: ImageIcon,
 };
 

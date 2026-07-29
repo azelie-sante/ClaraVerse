@@ -10,9 +10,11 @@
  * - html: Web pages with embedded CSS and JavaScript
  * - svg: Scalable vector graphics and diagrams
  * - mermaid: Flowcharts, sequence diagrams, gantt charts, etc.
+ * - react: Interactive React components (Tailwind + charts/icons), rendered in a
+ *   sandboxed iframe via an in-browser transpile (no build step)
  * - image: Tool-generated images/plots displayed as slides
  */
-export type ArtifactType = 'html' | 'svg' | 'mermaid' | 'image';
+export type ArtifactType = 'html' | 'svg' | 'mermaid' | 'react' | 'image';
 
 /**
  * Image data for image artifact type

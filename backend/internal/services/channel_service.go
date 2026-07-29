@@ -1,6 +1,8 @@
 package services
 
 import (
+	"strconv"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"bytes"
 	"claraverse/internal/crypto"
 	"claraverse/internal/database"
@@ -1415,4 +1417,36 @@ func (s *ChannelService) getTelegramUpdates(botToken string, offset int64) ([]*m
 	}
 
 	return result.Result, nil
+}
+
+// NotifyUserTelegram sends a proactive message to the user's own Telegram bot
+// chat (most recent session). Used by background features (e.g. the Crew
+// review inbox) — quietly errors if the user has no connected Telegram.
+func (s *ChannelService) NotifyUserTelegram(ctx context.Context, userID, text string) error {
+	channel, err := s.GetByUserAndPlatform(ctx, userID, models.ChannelPlatformTelegram)
+	if err != nil || channel == nil || !channel.Enabled {
+		if err == nil {
+			err = fmt.Errorf("no enabled telegram channel")
+		}
+		return err
+	}
+	config, err := s.GetDecryptedConfig(ctx, channel)
+	if err != nil {
+		return err
+	}
+	botToken, _ := config["bot_token"].(string)
+	if botToken == "" {
+		return fmt.Errorf("telegram channel has no bot token")
+	}
+	var session models.ChannelSession
+	if err := s.sessionsCollection().FindOne(ctx,
+		bson.M{"channelId": channel.ID},
+		options.FindOne().SetSort(bson.M{"updatedAt": -1})).Decode(&session); err != nil {
+		return fmt.Errorf("no telegram session yet — message the bot once first")
+	}
+	chatID, err := strconv.ParseInt(session.PlatformChatID, 10, 64)
+	if err != nil {
+		return fmt.Errorf("bad chat id on session")
+	}
+	return s.SendTelegramMessage(ctx, botToken, chatID, text)
 }

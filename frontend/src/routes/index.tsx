@@ -209,6 +209,24 @@ const router = createBrowserRouter([
         ),
       },
       {
+        // Crew — agent teams: projects → team → card pipeline with human
+        // review. New path; the legacy Nexus above stays until retired.
+        path: '/crew',
+        element: (
+          <ProtectedRoute>
+            <CrewHome />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/crew/:projectId',
+        element: (
+          <ProtectedRoute>
+            <CrewProjectPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: '/admin',
         element: (
           <AdminRoute>

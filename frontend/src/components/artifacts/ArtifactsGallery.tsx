@@ -60,6 +60,7 @@ const ARTIFACT_ICONS: Record<
   html: FileCode,
   svg: ImageIcon,
   mermaid: GitBranch,
+  react: FileCode,
   image: PhotoIcon,
 };
 
@@ -225,6 +226,7 @@ export function ArtifactsGallery({
       html: 0,
       svg: 0,
       mermaid: 0,
+      react: 0,
     };
     for (const artifact of allArtifacts) {
       counts[artifact.type]++;
@@ -265,6 +267,9 @@ export function ArtifactsGallery({
 
       // Generate thumbnails one at a time with a small delay to avoid overwhelming the browser
       for (const artifact of allArtifactsRaw) {
+        // React artifacts render live in an iframe (React + CDN); rasterizing a
+        // thumbnail is heavy and slow, so show the type icon instead.
+        if (artifact.type === 'react') continue;
         try {
           const thumbnail = await getCachedThumbnail(
             artifact.id,

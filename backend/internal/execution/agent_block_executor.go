@@ -553,13 +553,23 @@ func (e *AgentBlockExecutor) executeOnce(ctx context.Context, block models.Block
 		for _, toolCall := range response.ToolCalls {
 			toolName := e.getToolName(toolCall)
 
-			// Check for repetition - if same tool called twice, it's likely looping
-			if executedToolCalls[toolName] {
-				log.Printf("⚠️ [AGENT-BLOCK] Detected repeated call to '%s', stopping to prevent loop", toolName)
+			// Loop detection keys on tool name + ARGUMENTS: calling the same
+			// tool with DIFFERENT args in one turn is legitimate fan-out (e.g.
+			// four search_web queries in parallel) — keying on name alone
+			// aborted the loop after 1 of 4 calls and shipped raw tool output
+			// as the final answer.
+			callKey := toolName
+			if fn, ok := toolCall["function"].(map[string]any); ok {
+				if args, ok := fn["arguments"].(string); ok {
+					callKey = toolName + "|" + args
+				}
+			}
+			if executedToolCalls[callKey] {
+				log.Printf("⚠️ [AGENT-BLOCK] Detected repeated identical call to '%s', stopping to prevent loop", toolName)
 				repeatDetected = true
 				break
 			}
-			executedToolCalls[toolName] = true
+			executedToolCalls[callKey] = true
 
 			// Extract userID from inputs for credential resolution (uses __user_id__ convention)
 			userID, _ := inputs["__user_id__"].(string)

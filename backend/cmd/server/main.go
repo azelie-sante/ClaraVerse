@@ -1234,6 +1234,56 @@ func main() {
 		// Secure file downloads (access code based - no auth required for download)
 		api.Get("/files/:id", secureDownloadHandler.Download)                                           // Download with access code
 		api.Get("/files/:id/info", secureDownloadHandler.GetInfo)                                       // Get file info with access code
+		// ─── Crew (agent teams): projects → members → cards pipeline with
+		// mandatory human review. Runs server-side via a background worker.
+		if mongoDB != nil {
+			crewService := services.NewCrewService(mongoDB)
+			if err := crewService.EnsureIndexes(context.Background()); err != nil {
+				log.Printf("⚠️ crew indexes: %v", err)
+			}
+			crewExec := execution.NewCrewExecAdapter(chatService, providerService, tools.GetRegistry(), credentialService)
+			crewWorker := services.NewCrewWorker(crewService, crewExec, 2)
+			if channelService != nil {
+				crewWorker.Notify = func(userID, projectName, cardTitle string) {
+					nctx, ncancel := context.WithTimeout(context.Background(), 15*time.Second)
+					defer ncancel()
+					if err := channelService.NotifyUserTelegram(nctx, userID,
+						fmt.Sprintf("📋 Crew · %s\n\"%s\" is ready for your review.", projectName, cardTitle)); err != nil {
+						log.Printf("crew notify (telegram) skipped: %v", err)
+					}
+				}
+			}
+			crewWorker.Start(context.Background())
+			ch := handlers.NewCrewHandler(crewService, crewWorker)
+			cw := api.Group("/crew", middleware.LocalAuthMiddleware(jwtAuth))
+			cw.Get("/roles", ch.Roles)
+			cw.Get("/templates", ch.Templates)
+			cw.Post("/projects/from-template", ch.CreateProjectFromTemplate)
+			cw.Get("/projects", ch.ListProjects)
+			cw.Post("/projects", ch.CreateProject)
+			cw.Get("/projects/:id", ch.GetProject)
+			cw.Put("/projects/:id", ch.UpdateProject)
+			cw.Post("/projects/:id/members", ch.HireMember)
+			cw.Put("/members/:memberId/status", ch.SetMemberStatus)
+			cw.Delete("/members/:memberId", ch.FireMember)
+			cw.Post("/projects/:id/cards", ch.CreateCard)
+			cw.Put("/cards/:cardId", ch.UpdateCard)
+			cw.Delete("/cards/:cardId", ch.DeleteCard)
+			cw.Post("/cards/:cardId/queue", ch.PromoteCard)
+			cw.Post("/cards/:cardId/review", ch.ReviewCard)
+			cw.Get("/cards/:cardId/pdf", ch.CardPDF)
+			cw.Post("/cards/:cardId/unqueue", ch.UnqueueCard)
+			cw.Post("/cards/:cardId/plan", ch.PlanCard)
+			cw.Post("/projects/:id/plan", ch.PlanProject)
+			cw.Post("/members/:memberId/docs", ch.UploadMemberDoc)
+			cw.Get("/skills", ch.Skills)
+			cw.Put("/members/:memberId/skills", ch.SetMemberSkills)
+			cw.Put("/members/:memberId/charter", ch.SetMemberCharter)
+			cw.Put("/members/:memberId/budget", ch.SetMemberBudget)
+			cw.Delete("/members/:memberId/docs/:index", ch.DeleteMemberDoc)
+			log.Println("✅ Crew (agent teams) routes registered")
+		}
+
 		api.Get("/files", middleware.LocalAuthMiddleware(jwtAuth), secureDownloadHandler.ListUserFiles) // List user's files
 		api.Delete("/files/:id", middleware.LocalAuthMiddleware(jwtAuth), secureDownloadHandler.Delete) // Delete file (owner only)
 

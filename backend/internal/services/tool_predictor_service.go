@@ -269,8 +269,11 @@ Select the minimal set of tools needed. Return JSON with selected_tools and reas
 		"content": userPrompt,
 	})
 
-	// Try with user-preferred model first, then failover through the pool
-	maxAttempts := 3
+	// Try with user-preferred model first, then failover through the pool.
+	// Prediction is on the critical path (blocks the chat reply) and the caller
+	// falls back to "all tools" on failure — so fail fast (2 attempts, short
+	// per-attempt timeout) rather than stalling behind a slow/broken predictor.
+	maxAttempts := 2
 	var lastErr error
 	var predictedNames []string
 
@@ -390,7 +393,7 @@ func (s *ToolPredictorService) callPredictorAPI(
 	httpReq.Header.Set("Authorization", "Bearer "+provider.APIKey)
 
 	// Send request with 30s timeout
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := &http.Client{Timeout: 12 * time.Second} // fail fast — caller falls back to all tools
 	resp, err := client.Do(httpReq)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
@@ -429,6 +432,7 @@ func (s *ToolPredictorService) callPredictorAPI(
 	var result ToolPredictionResult
 	content := strings.TrimSpace(apiResponse.Choices[0].Message.Content)
 	content = stripMarkdownCodeBlock(content)
+	content = extractJSONBlock(content) // pull JSON out of any <think>/reasoning/prose wrapper (gpt-oss emits these → "invalid character '<'")
 
 	if err := json.Unmarshal([]byte(content), &result); err != nil {
 		log.Printf("⚠️ [TOOL-PREDICTOR] Failed to parse prediction: %v, content: %s", err, content)
@@ -684,6 +688,26 @@ func (s *ToolPredictorService) mergeToolNames(predicted []string, cached []strin
 		merged = append(merged, name)
 	}
 	return merged
+}
+
+// extractJSONBlock returns the outermost JSON object/array in s, discarding any
+// prose, <think>…</think> reasoning, or HTML the model wrapped it in (e.g.
+// gpt-oss emits reasoning tags → the raw content starts with '<' and fails to
+// parse). Returns s unchanged if no JSON delimiters are found.
+func extractJSONBlock(s string) string {
+	start := strings.IndexAny(s, "{[")
+	if start < 0 {
+		return s
+	}
+	closer := byte('}')
+	if s[start] == '[' {
+		closer = ']'
+	}
+	end := strings.LastIndexByte(s, closer)
+	if end <= start {
+		return s
+	}
+	return s[start : end+1]
 }
 
 // stripMarkdownCodeBlock removes ```json ... ``` wrapping that some LLMs add

@@ -11,6 +11,7 @@
 import { HTMLRenderer } from './HTMLRenderer';
 import { SVGRenderer } from './SVGRenderer';
 import { MermaidRenderer } from './MermaidRenderer';
+import { ReactRenderer } from './ReactRenderer';
 import { ImageRenderer } from './ImageRenderer';
 import type { ArtifactType, Artifact } from '@/types/artifact';
 
@@ -46,6 +47,7 @@ const CONTENT_RENDERERS: Partial<Record<ArtifactType, ContentRendererComponent>>
   html: HTMLRenderer,
   svg: SVGRenderer,
   mermaid: MermaidRenderer,
+  react: ReactRenderer,
 } as const;
 
 /**
@@ -64,4 +66,4 @@ export function hasRenderer(type: string): boolean {
 }
 
 // Export individual renderers for direct usage if needed
-export { HTMLRenderer, SVGRenderer, MermaidRenderer, ImageRenderer };
+export { HTMLRenderer, SVGRenderer, MermaidRenderer, ReactRenderer, ImageRenderer };

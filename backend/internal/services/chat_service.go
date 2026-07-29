@@ -1879,31 +1879,41 @@ func (s *ChatService) StreamChatCompletion(userConn *models.UserConnection) erro
 					"method": "skill",
 				})
 			} else if s.toolPredictorService != nil && len(credentialFilteredTools) > 0 {
-				// No skill matched — fall back to tool predictor
+				// No skill matched — predict CAPABILITY GROUPS (Phase 2), not
+				// individual tools. The predictor chooses among ~12 groups instead
+				// of ~192 tools (a coarse choice a small model gets right), then we
+				// expand the chosen groups to their member tools. Reuses the whole
+				// PredictTools machinery by passing synthetic group definitions.
 				sendStatus("predicting_tools", nil)
-				log.Printf("🤖 [TOOL-PREDICTOR] No skill matched, using tool prediction with conversation history (%d messages)...", len(messages))
-				predictedTools, err := s.toolPredictorService.PredictTools(
+				groupDefs := availableGroupDefs(credentialFilteredTools)
+				log.Printf("🤖 [TOOL-PREDICTOR] Predicting capability groups (%d groups available from %d tools, %d history msgs)...",
+					len(groupDefs), len(credentialFilteredTools), len(messages))
+				predictedGroupDefs, err := s.toolPredictorService.PredictTools(
 					context.Background(),
 					userConn.UserID,
 					userConn.ConversationID,
 					userMessage,
-					credentialFilteredTools,
+					groupDefs,
 					messages,
 				)
 
 				if err != nil {
-					log.Printf("⚠️ [TOOL-PREDICTOR] Prediction failed: %v, falling back to all tools", err)
+					log.Printf("⚠️ [TOOL-PREDICTOR] Group prediction failed: %v, falling back to all tools", err)
 					tools = credentialFilteredTools
 					sendStatus("tools_ready", map[string]interface{}{
 						"count":  len(credentialFilteredTools),
 						"method": "fallback",
 					})
 				} else {
-					log.Printf("✅ [TOOL-PREDICTOR] Using predicted tools: %d selected", len(predictedTools))
-					tools = predictedTools
+					tools = expandGroupsToTools(predictedGroupDefs, credentialFilteredTools)
+					groupNames := make([]string, 0, len(predictedGroupDefs))
+					for _, g := range predictedGroupDefs {
+						groupNames = append(groupNames, toolDefName(g))
+					}
+					log.Printf("✅ [TOOL-PREDICTOR] Selected groups %v → %d tools", groupNames, len(tools))
 					sendStatus("tools_ready", map[string]interface{}{
-						"count":  len(predictedTools),
-						"method": "predicted",
+						"count":  len(tools),
+						"method": "predicted_groups",
 					})
 				}
 			} else {
@@ -1911,6 +1921,20 @@ func (s *ChatService) StreamChatCompletion(userConn *models.UserConnection) erro
 				log.Printf("📦 [REQUEST] No skill matched, no predictor, using all %d filtered tools", len(credentialFilteredTools))
 				tools = credentialFilteredTools
 			}
+
+			// Dependency-closure guarantee: when a data file is in play, ensure the
+			// WHOLE data/analysis workflow is available (read -> compute -> output),
+			// unioned ON TOP of whatever was selected — so the model never stalls
+			// mid-task on a missing step (the predictor kept separating run_python
+			// from the output tools). Then always-on core tools. Additive only.
+			if messagesHaveDataFile(messages) {
+				before := len(tools)
+				tools = unionToolsByName(tools, credentialFilteredTools, dataAnalysisGroupTools)
+				if len(tools) != before {
+					log.Printf("📊 [TOOLS] Data file present → guaranteed data-analysis group (%d→%d tools)", before, len(tools))
+				}
+			}
+			tools = unionToolsByName(tools, credentialFilteredTools, alwaysOnCoreTools)
 		}
 
 		// ─── RAG: per-turn search_knowledge injection ─────────────
@@ -4569,4 +4593,41 @@ func (s *ChatService) RunSubagent(ctx context.Context, params tools.SubagentPara
 	return tools.SubagentResult{
 		Summary: result.Response,
 	}, nil
+}
+
+var dataAnalysisGroupTools = map[string]bool{
+	"read_spreadsheet": true, "read_data_file": true, "read_document": true, "download_file": true,
+	"run_python": true, "analyze_data": true, "calculate_math": true, "train_model": true,
+	"create_document": true, "html_to_pdf": true, "create_text_file": true, "create_presentation": true,
+}
+
+// alwaysOnCoreTools accompany every turn so universally-useful capabilities are
+// never missing regardless of what the predictor chose.
+var alwaysOnCoreTools = map[string]bool{
+	"ask_user": true, "get_current_time": true, "calculate_math": true,
+	"search_memory": true, "add_memory": true,
+}
+
+func messagesHaveDataFile(messages []map[string]interface{}) bool {
+	hit := func(s string) bool {
+		return strings.Contains(s, "[Data File:") || strings.Contains(s, "[Document:") ||
+			strings.Contains(s, "clara_load(") || strings.Contains(s, "read_document(")
+	}
+	for _, m := range messages {
+		switch c := m["content"].(type) {
+		case string:
+			if hit(c) {
+				return true
+			}
+		case []interface{}:
+			for _, part := range c {
+				if pm, ok := part.(map[string]interface{}); ok {
+					if t, ok := pm["text"].(string); ok && hit(t) {
+						return true
+					}
+				}
+			}
+		}
+	}
+	return false
 }

@@ -28,7 +28,7 @@ function generateArtifactId(): string {
  * Validate artifact type
  */
 function isValidArtifactType(type: string): type is ArtifactType {
-  return ['html', 'svg', 'mermaid'].includes(type);
+  return ['html', 'svg', 'mermaid', 'react'].includes(type);
 }
 
 /**
@@ -84,7 +84,8 @@ function extractCodeFenceArtifacts(content: string): {
   // - Handles both Unix \n and Windows \r\n line endings
   // - Allows optional whitespace after language identifier
   // - Closing ``` can have optional whitespace/newline before it
-  const codeFenceRegex = /```(html|htm|svg|mermaid)[ \t]*[\r\n]+([\s\S]*?)[\r\n]*```/gi;
+  const codeFenceRegex =
+    /```(html|htm|svg|mermaid|react|jsx|tsx)[ \t]*[\r\n]+([\s\S]*?)[\r\n]*```/gi;
 
   let match;
   const processedRanges: Array<{ start: number; end: number }> = [];
@@ -101,7 +102,9 @@ function extractCodeFenceArtifacts(content: string): {
         ? 'html'
         : langLower === 'svg'
           ? 'svg'
-          : 'mermaid';
+          : langLower === 'react' || langLower === 'jsx' || langLower === 'tsx'
+            ? 'react'
+            : 'mermaid';
 
     // Check if content looks like actual artifact content (heuristic)
     const trimmedContent = artifactContent.trim();
@@ -113,11 +116,15 @@ function extractCodeFenceArtifacts(content: string): {
           trimmedContent.includes('<head') ||
           trimmedContent.includes('<div'))) ||
       (type === 'svg' && trimmedContent.includes('<svg')) ||
+      // A React artifact must export a component (default export) and contain JSX.
+      (type === 'react' &&
+        /export\s+default/.test(trimmedContent) &&
+        (trimmedContent.includes('return') || trimmedContent.includes('=>'))) ||
       (type === 'mermaid' && trimmedContent.length > 20); // Mermaid diagrams are usually substantial
 
     if (isLikelyArtifact) {
       // Generate a descriptive title
-      let title = `${language.toUpperCase()} Document`;
+      let title = type === 'react' ? 'React Component' : `${language.toUpperCase()} Document`;
 
       // Try to extract title from HTML
       if (type === 'html') {
@@ -205,6 +212,7 @@ export function getArtifactExtension(type: ArtifactType): string {
     html: '.html',
     svg: '.svg',
     mermaid: '.mermaid',
+    react: '.jsx',
     image: '.png',
   };
   return extensions[type];
@@ -218,6 +226,7 @@ export function getArtifactMimeType(type: ArtifactType): string {
     html: 'text/html',
     svg: 'image/svg+xml',
     mermaid: 'text/plain',
+    react: 'text/jsx',
     image: 'image/png',
   };
   return mimeTypes[type];
