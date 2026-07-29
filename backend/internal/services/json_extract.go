@@ -4,9 +4,6 @@ import "strings"
 
 // extractJSONFromLLM extracts a JSON object from a string that may contain
 // markdown code blocks.
-//
-// Previously lived alongside the removed orchestrator; re-homed here when
-// that was removed, since the memory selection service still depends on it.
 func extractJSONFromLLM(s string) string {
 	if idx := strings.Index(s, "```json"); idx >= 0 {
 		start := idx + 7

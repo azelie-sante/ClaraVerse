@@ -8,14 +8,6 @@ sidebar_position: 4
 
 Routines are task sequences that run on a schedule. Define what Clara should do, set a time, and she handles the rest -- reporting results back to you via Telegram.
 
-:::note
-
-The Routines management UI shipped inside the retired multi-agent surface
-and is being rebuilt. The scheduler and its API keep running; routines created
-earlier continue to fire on schedule.
-
-:::
-
 ## Creating a Routine
 
 1. Open the Routines view.

@@ -33,11 +33,8 @@ func (h *RoutineHandler) SetMCPBridgeService(svc *services.MCPBridgeService) {
 }
 
 // GetRoutineRuns returns the execution history for a specific routine.
-//
-// Run history used to be persisted as multi-agent tasks. That store was removed
-// along with the rest of that surface, so there is currently no
-// backing store for per-routine history and this always reports an empty
-// list. The endpoint is kept so the existing clients keep working.
+// There is no backing store for per-routine history yet, so this reports
+// an empty list.
 func (h *RoutineHandler) GetRoutineRuns(c *fiber.Ctx) error {
 	if _, err := primitive.ObjectIDFromHex(c.Params("id")); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid routine ID"})

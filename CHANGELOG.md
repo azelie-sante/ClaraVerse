@@ -4,33 +4,6 @@ All notable changes to ClaraVerse.
 
 This project uses semantic versioning. Tags are cut as `vMAJOR.MINOR.PATCH`.
 
-## [Unreleased]
-
-### Removed
-
-- **The legacy multi-agent surface** (board, daemons, orchestrator,
-  session/task/project/save stores, artifact handoff, orchestration
-  durability, its WebSocket + REST routes and its cleanup job). Crew
-  covers the same ground: projects → team members → a card pipeline
-  with human review. See `docs-site/docs/features/crew.md`.
-- Consequences worth knowing before upgrading:
-  - Knowledge-base project pickers in Chat and the workflow
-    `knowledge_search` block now list **Crew** projects.
-  - Per-routine run history has no backing store; the endpoint
-    returns an empty list. The scheduler itself is unaffected.
-  - The Routines management UI shipped inside the removed surface and
-    needs rebuilding; its backend and API are untouched.
-  - Telegram channels and routines no longer route through the
-    orchestrator and use the direct chat path instead.
-  - `produce_artifact` / `list_artifacts` / `read_artifact` are gone
-    from the tool registry.
-- Four collections outlived the removal and were renamed:
-  `nexus_persona` → `persona`, `nexus_engrams` → `engrams`,
-  `nexus_knowledge_files` → `knowledge_files`,
-  `nexus_knowledge_collections` → `knowledge_collections`. Run
-  `backend/scripts/migrate_legacy_collections.js` before starting the
-  new build, or the app comes up pointing at empty collections.
-
 ## [0.3.0] — 2026-06-01
 
 Project-scoped knowledge bases (RAG) wired through every surface
