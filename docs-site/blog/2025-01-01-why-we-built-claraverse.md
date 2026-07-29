@@ -58,7 +58,7 @@ Once we committed to building this thing properly, the feature list grew fast. N
 
 **[Visual Workflow Builder](/docs/features/workflows)** came next. Drag-and-drop nodes to build AI automations without writing code. Connect an input to a model to a tool to an output. It is the kind of thing that costs $50/month on SaaS platforms, and we shipped it for free.
 
-**[Nexus](/docs/features/nexus)** is probably my favorite feature. Think of it as a Trello-like board, except the AI is your team. You create cards, assign them to AI agents, and they work through the tasks. It sounds wild until you try it, and then you wonder how you ever managed projects without it.
+**[Crew](/docs/features/crew)** is probably my favorite feature. Think of it as a Trello-like board, except the AI is your team. You create cards, assign them to AI agents, and they work through the tasks. It sounds wild until you try it, and then you wonder how you ever managed projects without it.
 
 We kept going. **150+ integrations** so ClaraVerse plugs into the tools you already use. **Telegram channels** so your AI can reach you where you are. **Routines** for scheduled automations that run without you babysitting them. An **MCP bridge** for connecting to the growing ecosystem of Model Context Protocol servers.
 

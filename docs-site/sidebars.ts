@@ -20,7 +20,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'features/chat',
         'features/workflows',
-        'features/nexus',
+        'features/crew',
         'features/routines',
         'features/channels',
         'features/integrations',

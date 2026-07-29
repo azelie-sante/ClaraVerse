@@ -20,8 +20,6 @@ type MCPWebSocketHandler struct {
 	mcpService    *services.MCPBridgeService
 	engramService *services.EngramService
 	personaStore  *services.PersonaService
-	eventBus      *services.NexusEventBus
-	sessionStore  *services.NexusSessionStore
 }
 
 // NewMCPWebSocketHandler creates a new MCP WebSocket handler
@@ -31,18 +29,14 @@ func NewMCPWebSocketHandler(mcpService *services.MCPBridgeService) *MCPWebSocket
 	}
 }
 
-// SetSyncServices injects the Nexus services needed for TUI ↔ cloud sync.
-// Called after Nexus services are initialized (requires MongoDB).
+// SetSyncServices injects the services needed for TUI ↔ cloud sync.
+// Called after the Mongo-backed stores are initialized.
 func (h *MCPWebSocketHandler) SetSyncServices(
 	engramService *services.EngramService,
 	personaStore *services.PersonaService,
-	eventBus *services.NexusEventBus,
-	sessionStore *services.NexusSessionStore,
 ) {
 	h.engramService = engramService
 	h.personaStore = personaStore
-	h.eventBus = eventBus
-	h.sessionStore = sessionStore
 }
 
 // HandleConnection handles incoming MCP client WebSocket connections
@@ -284,19 +278,6 @@ func (h *MCPWebSocketHandler) writeLoop(c *websocket.Conn, conn *models.MCPConne
 	}
 }
 
-// resolveSessionID looks up the user's current Nexus session ID.
-// Returns a zero ObjectID if the session store is not set or lookup fails.
-func (h *MCPWebSocketHandler) resolveSessionID(ctx context.Context, userID string) primitive.ObjectID {
-	if h.sessionStore == nil {
-		return primitive.NilObjectID
-	}
-	session, err := h.sessionStore.GetByUser(ctx, userID)
-	if err != nil || session == nil {
-		return primitive.NilObjectID
-	}
-	return session.ID
-}
-
 // memoryTypeMapping maps local TUI memory types to cloud engram types.
 var memoryTypeMapping = map[string]string{
 	"fact":       "user_fact",
@@ -311,7 +292,8 @@ func (h *MCPWebSocketHandler) handleSyncState(userID string, payload map[string]
 	ctx := context.Background()
 
 	// Look up user's session to attach SessionID to engrams
-	sessionID := h.resolveSessionID(ctx, userID)
+	// Engrams synced from the TUI are not scoped to a session.
+	sessionID := primitive.NilObjectID
 
 	log.Printf("[MCP-SYNC] handleSyncState: memories=%v, persona=%v, skills=%v",
 		payload["memories"] != nil, payload["persona"] != nil, payload["skills"] != nil)
@@ -332,32 +314,17 @@ func (h *MCPWebSocketHandler) handleSyncState(userID string, payload map[string]
 	}
 
 	log.Printf("📥 Processed sync_state from TUI for user %s", userID)
-
-	// Notify Nexus frontends that bridge state has updated
-	if h.eventBus != nil {
-		h.eventBus.Publish(userID, services.NexusEvent{
-			Type: "bridge_state_updated",
-			Data: map[string]interface{}{"bridge_connected": true},
-		})
-	}
 }
 
 // handleMemoryUpdate processes incremental memory updates from the TUI daemon.
 func (h *MCPWebSocketHandler) handleMemoryUpdate(userID string, payload map[string]interface{}) {
 	ctx := context.Background()
 
-	sessionID := h.resolveSessionID(ctx, userID)
+	// Engrams synced from the TUI are not scoped to a session.
+	sessionID := primitive.NilObjectID
 
 	if memoriesRaw, ok := payload["memories"]; ok {
 		h.upsertMemoriesAsEngrams(ctx, userID, sessionID, memoriesRaw)
-	}
-
-	// Notify Nexus frontends
-	if h.eventBus != nil {
-		h.eventBus.Publish(userID, services.NexusEvent{
-			Type: "bridge_state_updated",
-			Data: map[string]interface{}{"memory_updated": true},
-		})
 	}
 }
 

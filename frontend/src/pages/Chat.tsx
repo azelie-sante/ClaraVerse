@@ -48,8 +48,7 @@ import { useArtifactStore } from '@/store/useArtifactStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { useChatKnowledgeStore } from '@/store/useChatKnowledgeStore';
 import { KnowledgeProjectChips } from '@/components/chat/KnowledgeProjectChips';
-import { nexusService } from '@/services/nexusService';
-import type { NexusProject } from '@/types/nexus';
+import { crewApi, type CrewProject } from '@/features/crew/api';
 import type { Message, ToolCall, RetryType } from '@/types/chat';
 import type { ActivePrompt } from '@/types/interactivePrompt';
 import { generateChatTitle, validateMessage } from '@/services/chatService';
@@ -341,10 +340,10 @@ export const Chat = () => {
   // useChatKnowledgeStore (persisted to localStorage by chat ID), so
   // it survives reloads and tab switches.
   //
-  // Projects are loaded once on mount from the Nexus REST API. We
+  // Projects are loaded once on mount from the Crew REST API. We
   // tolerate failure silently — RAG is optional, a missing project
   // list just hides the picker rather than breaking chat.
-  const [knowledgeProjects, setKnowledgeProjects] = useState<NexusProject[]>([]);
+  const [knowledgeProjects, setKnowledgeProjects] = useState<CrewProject[]>([]);
   const knowledgeStoreSet = useChatKnowledgeStore(s => s.set);
   const knowledgeStorePromote = useChatKnowledgeStore(s => s.promoteDraft);
   const chatKnowledgeKey = chat?.id ?? null;
@@ -362,7 +361,7 @@ export const Chat = () => {
 
   useEffect(() => {
     let cancelled = false;
-    nexusService
+    crewApi
       .listProjects()
       .then(list => {
         if (!cancelled) setKnowledgeProjects(list);
@@ -1668,10 +1667,10 @@ export const Chat = () => {
       // Active when at least one project is attached to the current
       // chat — gives the user a visible cue that knowledge is in play.
       isActive: knowledgeProjectIds.length > 0,
-      // Click navigates to Nexus → projects, where the user can
+      // Click navigates to Crew → projects, where the user can
       // create projects + upload knowledge files. The in-chat picker
       // (chip row above the input) handles per-chat attachment.
-      onClick: () => navigate('/nexus'),
+      onClick: () => navigate('/crew'),
       tooltip:
         knowledgeProjectIds.length > 0
           ? `${knowledgeProjectIds.length} project knowledge base${knowledgeProjectIds.length > 1 ? 's' : ''} attached`

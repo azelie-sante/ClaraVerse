@@ -8,10 +8,18 @@ sidebar_position: 4
 
 Routines are task sequences that run on a schedule. Define what Clara should do, set a time, and she handles the rest -- reporting results back to you via Telegram.
 
+:::note
+
+The Routines management UI shipped inside the retired multi-agent surface
+and is being rebuilt. The scheduler and its API keep running; routines created
+earlier continue to fire on schedule.
+
+:::
+
 ## Creating a Routine
 
-1. Navigate to **Nexus** and click **Routines** in the Nexus sidebar.
-2. Click **New Routine** inside the Routines view.
+1. Open the Routines view.
+2. Click **New Routine**.
 3. Describe the task sequence. For example:
    - "Every Monday at 9 AM, check open GitHub PRs, summarize them, and send the summary to my Telegram."
    - "Daily at 6 PM, pull today's analytics from Mixpanel and post a report to Slack #metrics."

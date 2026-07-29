@@ -1,4 +1,4 @@
-import { MessageSquare, Workflow, Settings, Shield, BrainCircuit, Brain, Users } from 'lucide-react';
+import { MessageSquare, Workflow, Settings, Shield, BrainCircuit, Users } from 'lucide-react';
 import { AppCard } from '@/components/dashboard';
 import { UserMenu, Snowfall } from '@/components/ui';
 import { useIsMobile } from '@/hooks';
@@ -19,13 +19,6 @@ const apps = [
     title: 'Workflows',
     description: 'Build Automations',
     href: '/agents',
-  },
-{
-    id: 'nexus',
-    icon: Brain,
-    title: 'Nexus',
-    description: 'Multi-agent task system',
-    href: '/nexus',
   },
   {
     id: 'crew',

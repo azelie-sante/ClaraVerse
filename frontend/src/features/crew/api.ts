@@ -1,6 +1,6 @@
 /**
- * Nexus v2 ("Crew") API client — projects → team members → the card pipeline.
- * New path, fully separate from the legacy Nexus.
+ * Crew API client — projects → team members → the card pipeline.
+ * Projects → team members → the card pipeline.
  */
 import { getApiBaseUrl } from '@/lib/config';
 import { authClient } from '@/lib/auth';

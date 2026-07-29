@@ -1,5 +1,5 @@
 // mint_token generates a short-lived JWT for an existing user, so the
-// nexus_e2e.sh script can run without needing the user to copy-paste a
+// e2e script can run without needing the user to copy-paste a
 // token from the browser. Pull the secret from the live container's env
 // to stay in sync with what the backend will accept.
 //

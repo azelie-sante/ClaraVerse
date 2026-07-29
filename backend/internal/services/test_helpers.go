@@ -5,7 +5,7 @@
 // Build tag `integration` keeps these out of the default `go test` runner
 // (which is a unit-only run). Trigger explicitly:
 //
-//   cd backend && go test -tags=integration -run TestNexus ./internal/services/...
+//   cd backend && go test -tags=integration ./internal/services/...
 //
 // The helpers connect to a real Mongo at MONGODB_URI (default
 // mongodb://localhost:27017) and create a fresh, throw-away database

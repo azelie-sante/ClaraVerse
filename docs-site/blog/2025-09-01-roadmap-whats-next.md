@@ -30,7 +30,7 @@ Before we talk about what is next, here is what you can use right now in ClaraVe
 
 - **Chat with auto-activating skills** -- Start a conversation and ClaraVerse automatically detects when a skill should fire. No manual toggling, no slash commands. It just works.
 - **Visual workflow builder** -- Drag, drop, and connect nodes to build automations. Need help? The AI-assisted generation can scaffold entire workflows from a prompt.
-- **Nexus Kanban board** -- This is the Trello-for-AI vision, and it is live. Create boards, organize AI tasks into columns, and let agents work through them. Task management meets intelligent automation.
+- **Crew Kanban board** -- This is the Trello-for-AI vision, and it is live. Create boards, organize AI tasks into columns, and let agents work through them. Task management meets intelligent automation.
 - **150+ built-in integrations** -- Connect to the tools you already use without hunting for plugins.
 - **Clara Companion MCP bridge** -- Bridge ClaraVerse capabilities into any MCP-compatible client.
 - **Telegram channels** -- Deploy agents directly to Telegram so they can interact with users outside the workspace.
@@ -45,7 +45,7 @@ That is not a roadmap. That is what is shipping today.
 
 ### Mobile App
 
-ClaraVerse should go where you go. We are building a native mobile experience so you can chat with agents, check on workflows, and manage Nexus boards from your phone. Same workspace, smaller screen, full control.
+ClaraVerse should go where you go. We are building a native mobile experience so you can chat with agents, check on workflows, and manage Crew boards from your phone. Same workspace, smaller screen, full control.
 
 ### Marketplace and Plugin Store
 
@@ -53,7 +53,7 @@ A community marketplace where anyone can share skills, workflows, and integratio
 
 - Publish a workflow that automates invoice processing
 - Share a skill that connects to a niche API
-- Download a ready-made Nexus board template for content planning
+- Download a ready-made Crew board template for content planning
 
 The best AI workspace is one shaped by the people who use it.
 
@@ -63,9 +63,9 @@ Here is what we are building toward: **ClaraVerse as the operating system for AI
 
 One self-hosted workspace where you chat, automate, delegate, and schedule -- all without leaving. Not disconnected tools glued together with API calls, but a single surface where AI agents, workflows, task boards, and communication channels are native citizens.
 
-You open ClaraVerse in the morning. Your [routines](/docs/features/routines) have already pulled overnight data. Your [Nexus board](/docs/features/nexus) shows what your agents accomplished and what needs your attention. You [chat](/docs/features/chat) with an agent to refine a report, then kick off a [workflow](/docs/features/workflows) to distribute it. Everything stays on your infrastructure, under your control.
+You open ClaraVerse in the morning. Your [routines](/docs/features/routines) have already pulled overnight data. Your [Crew board](/docs/features/crew) shows what your agents accomplished and what needs your attention. You [chat](/docs/features/chat) with an agent to refine a report, then kick off a [workflow](/docs/features/workflows) to distribute it. Everything stays on your infrastructure, under your control.
 
-That is the vision. And with Nexus, Routines, Workflows, and 150+ integrations already live, we are closer than you might think.
+That is the vision. And with Crew, Routines, Workflows, and 150+ integrations already live, we are closer than you might think.
 
 ## Built in the Open
 

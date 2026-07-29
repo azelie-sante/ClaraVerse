@@ -20,7 +20,7 @@ import (
 //
 // Lifecycle:
 //
-//   * Nexus daemon: orchestrator builds one of these per daemon with
+//   * Agent runs: the caller builds one of these per run with
 //     defaultProjectIDs = [task.project_id], registers it on the
 //     per-user tool map, and tears it down when the daemon exits.
 //

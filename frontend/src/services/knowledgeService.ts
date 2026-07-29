@@ -1,9 +1,9 @@
 // Client for the per-project RAG knowledge base. Mirrors the
 // Go-side rag.Service surface that's reachable over HTTP.
 //
-// Why a dedicated service file: this isn't a Nexus concept (knowledge
-// lives on projects, projects span Chat / Nexus / Workflows) so it
-// shouldn't pile onto nexusService. Separate module = easier to find
+// Why a dedicated service file: this isn't a Crew concept (knowledge
+// lives on projects, projects span Chat / Crew / Workflows) so it
+// shouldn't pile onto the crew API client. Separate module = easier to find
 // + easier to add specialized retry/streaming later.
 
 import { api } from './api';

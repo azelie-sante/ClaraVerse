@@ -892,108 +892,13 @@ func main() {
 		log.Println("✅ Routine handler initialized (Dobby's Claw)")
 	}
 
-	// Initialize Nexus multi-agent system (requires MongoDB).
-	// cortexService, nexusTaskStore, nexusSessionStore are hoisted to the
-	// outer scope so the headless run-handler route registration (much
-	// later in the file) can reuse them without rebuilding.
-	var nexusWSHandler *handlers.NexusWebSocketHandler
-	var nexusHandler *handlers.NexusHandler
-	var cortexService *services.CortexService
-	var nexusTaskStore *services.NexusTaskStore
-	var nexusSessionStore *services.NexusSessionStore
-	// ragService is wired alongside Nexus (knowledge bases are
-	// per-project, projects live in the Nexus surface) but the
-	// knowledge HTTP routes are registered separately further down.
+	// Persona + engram stores and the per-project RAG knowledge bases
+	// (requires MongoDB). ragService is hoisted to the outer scope so the
+	// knowledge HTTP routes registered further down can reuse it.
 	var ragService *rag.Service
 	if mongoDB != nil {
-		nexusTaskStore = services.NewNexusTaskStore(mongoDB)
-		if routineHandler != nil {
-			routineHandler.SetTaskStore(nexusTaskStore)
-		}
-		nexusSessionStore = services.NewNexusSessionStore(mongoDB)
 		personaService := services.NewPersonaService(mongoDB)
 		engramService := services.NewEngramService(mongoDB)
-		daemonPool := services.NewDaemonPool(mongoDB)
-		daemonTemplateStore := services.NewDaemonTemplateStore(mongoDB)
-		nexusProjectStore := services.NewNexusProjectStore(mongoDB)
-		nexusSaveStore := services.NewNexusSaveStore(mongoDB)
-
-		nexusEventBus := services.NewNexusEventBus()
-
-		cortexService = services.NewCortexService(
-			chatService,
-			providerService,
-			tools.GetRegistry(),
-			toolService,
-			toolPredictorService,
-			personaService,
-			nexusTaskStore,
-			nexusSessionStore,
-			engramService,
-			daemonPool,
-			nexusEventBus,
-		)
-
-		// Wire optional services
-		if memorySelectionService != nil {
-			cortexService.SetMemorySelectionService(memorySelectionService)
-		}
-		if toolService != nil {
-			cortexService.SetToolService(toolService)
-		}
-		if mcpBridge != nil {
-			cortexService.SetMCPBridge(mcpBridge)
-		}
-		cortexService.SetDaemonTemplateStore(daemonTemplateStore)
-		cortexService.SetProjectStore(nexusProjectStore)
-		cortexService.SetSaveStore(nexusSaveStore)
-		if skillService != nil {
-			cortexService.SetSkillService(skillService)
-		}
-
-		// Structured artifact handoff between daemons in a Nexus session.
-		// When this is wired, daemons get produce/list/read_artifact tools
-		// and the system prompt lists predecessor artifacts. Falls back to
-		// the old 4000-char text-only dep results if the store is missing.
-		if artifactStore, err := services.NewNexusArtifactStore(mongoDB); err != nil {
-			log.Printf("⚠️ Nexus artifact store init failed: %v", err)
-		} else {
-			cortexService.SetArtifactStore(artifactStore)
-			log.Println("✅ Nexus artifact store wired — structured daemon handoff enabled")
-		}
-
-		// Durability for multi-daemon orchestrations. When this is wired, every
-		// completed daemon is checkpointed to Mongo, a 10s heartbeat keeps the
-		// orphan scanner honest, and a crashed backend can resume interrupted
-		// runs at boot. Same operational shape as the workflow state store.
-		if orchStore, err := services.NewNexusOrchestrationStore(mongoDB); err != nil {
-			log.Printf("⚠️ Nexus orchestration store init failed: %v", err)
-		} else {
-			cortexService.SetNexusOrchStore(orchStore)
-			log.Println("✅ Nexus orchestration durability wired — multi-daemon runs survive crashes")
-		}
-
-		nexusWSHandler = handlers.NewNexusWebSocketHandler(
-			cortexService,
-			nexusSessionStore,
-			nexusTaskStore,
-			daemonPool,
-			personaService,
-			engramService,
-			nexusEventBus,
-			mcpBridge,
-		)
-
-		nexusHandler = handlers.NewNexusHandler(
-			nexusTaskStore,
-			nexusSessionStore,
-			daemonPool,
-			personaService,
-			engramService,
-			daemonTemplateStore,
-			nexusProjectStore,
-			nexusSaveStore,
-		)
 
 		// RAG knowledge bases (per project). Vector store = Qdrant
 		// sidecar; embedder = FastEmbed sidecar. Both URLs come from
@@ -1011,14 +916,10 @@ func main() {
 		}
 		ragService = rag.NewService(mongoDB, qdrantURL, embeddingsURL, "./uploads")
 		log.Printf("🔎 RAG wired — qdrant=%s embeddings=%s", qdrantURL, embeddingsURL)
-		// Cortex picks up the searcher so daemons on project-scoped
-		// tasks get search_knowledge automatically when the project
-		// has indexed files.
+		// Chat picks up the searcher — the picker in the chat input
+		// attaches project IDs per-turn and the chat service injects
+		// search_knowledge scoped to those projects.
 		ragSearcher := services.NewRAGSearcher(ragService)
-		cortexService.SetRAGSearcher(ragSearcher)
-		// Chat picks it up too — picker in the chat input attaches
-		// project IDs per-turn, chat service injects search_knowledge
-		// scoped to those projects.
 		if chatService != nil {
 			chatService.SetRAGSearcher(ragSearcher)
 			log.Println("✅ Chat search_knowledge wired (multi-project picker)")
@@ -1033,78 +934,9 @@ func main() {
 		}
 
 		// Wire sync services into MCP WebSocket handler for TUI ↔ cloud sync
-		mcpWSHandler.SetSyncServices(engramService, personaService, nexusEventBus, nexusSessionStore)
-		// Wire event bus into MCP bridge service so disconnect events reach Nexus frontends
-		mcpBridge.SetEventBus(nexusEventBus)
-		// Wire Cortex into existing services for Nexus-powered routing
-		if routineService != nil {
-			routineService.SetCortexService(cortexService)
-		}
-		if channelHandler != nil {
-			channelHandler.SetCortexService(cortexService)
-		}
+		mcpWSHandler.SetSyncServices(engramService, personaService)
 
-		// Cleanup zombie daemons and stale session state from previous crashes
-		ctx := context.Background()
-		if cleaned, err := daemonPool.CleanupStaleDaemons(ctx); err != nil {
-			log.Printf("⚠️ Failed to cleanup stale daemons: %v", err)
-		} else if cleaned > 0 {
-			log.Printf("🧹 Cleaned up %d stale daemon(s) from previous run", cleaned)
-		}
-		if cleared, err := nexusSessionStore.ClearAllActive(ctx); err != nil {
-			log.Printf("⚠️ Failed to clear stale session state: %v", err)
-		} else if cleared > 0 {
-			log.Printf("🧹 Cleared active state from %d session(s)", cleared)
-		}
-		// Sweep tasks stuck in non-terminal states (pending/executing/
-		// waiting_input) from a previous run. Without this, every crash
-		// leaves zombie cards in the kanban that users see as "queued
-		// but never starting" because the daemon process that owned them
-		// is gone. 5-minute threshold matches the daemon orphan-heartbeat
-		// window — anything older AND still non-terminal is definitely
-		// dead, not just slow.
-		if swept, err := nexusTaskStore.CleanupStaleTasks(ctx, 5*time.Minute); err != nil {
-			log.Printf("⚠️ Failed to cleanup stale tasks: %v", err)
-		} else if swept > 0 {
-			log.Printf("🧹 Marked %d stuck task(s) as failed from previous run", swept)
-		}
-
-		// Nexus orphan scan + auto-resume. We delay a few seconds after boot so
-		// any in-flight pod that's actually still alive gets a chance to write
-		// a fresh heartbeat — avoids us stealing a run from a sibling.
-		// Single-node deployments will never see that race; the delay is
-		// cheap insurance for future multi-node setups.
-		if orchStore := cortexService.NexusOrchStore(); orchStore != nil {
-			go func() {
-				time.Sleep(3 * time.Second)
-				scanCtx, scanCancel := context.WithTimeout(context.Background(), 30*time.Second)
-				defer scanCancel()
-				orphans, err := orchStore.FindOrphaned(scanCtx, services.NexusOrchOrphanThreshold)
-				if err != nil {
-					log.Printf("⚠️ [NEXUS-RESUME] orphan scan failed: %v", err)
-					return
-				}
-				services.LogNexusOrchestrationStartup(orphans)
-				for _, st := range orphans {
-					st := st // capture
-					go func() {
-						// Panic recovery lives inside ResumeOrchestration —
-						// fiber's recover middleware shadows the builtin here.
-						// 30 min matches HandleUserMessage's exec ceiling.
-						resumeCtx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
-						defer cancel()
-						cortexService.ResumeOrchestration(resumeCtx, st)
-					}()
-				}
-			}()
-		}
-
-		// Seed default daemon templates
-		if err := daemonTemplateStore.SeedDefaults(ctx); err != nil {
-			log.Printf("⚠️ Failed to seed daemon templates: %v", err)
-		}
-
-		log.Println("✅ Nexus multi-agent system initialized")
+		log.Println("✅ Knowledge bases + persona/engram sync initialized")
 	}
 
 	// Initialize chat sync handler (requires chat sync service)
@@ -1545,55 +1377,11 @@ func main() {
 			log.Println("✅ Dobby's Claw routes registered")
 		}
 
-		// Nexus multi-agent system routes (requires authentication + MongoDB)
-		if nexusHandler != nil {
-			nexus := api.Group("/nexus", middleware.LocalAuthMiddleware(jwtAuth))
-			nexus.Get("/session", nexusHandler.GetSession)
-			nexus.Get("/tasks", nexusHandler.ListTasks)
-			nexus.Post("/tasks", nexusHandler.CreateTask)
-			nexus.Get("/tasks/:id", nexusHandler.GetTask)
-			nexus.Put("/tasks/:id", nexusHandler.UpdateTask)
-			nexus.Delete("/tasks/:id", nexusHandler.DeleteTask)
-			nexus.Get("/daemons", nexusHandler.ListDaemons)
-			nexus.Get("/daemons/:id", nexusHandler.GetDaemon)
-			nexus.Post("/daemons/:id/cancel", nexusHandler.CancelDaemon)
-			nexus.Get("/persona", nexusHandler.GetPersona)
-			nexus.Get("/engrams", nexusHandler.GetEngrams)
-			nexus.Get("/daemon-templates", nexusHandler.ListDaemonTemplates)
-			nexus.Post("/daemon-templates", nexusHandler.CreateDaemonTemplate)
-			nexus.Put("/daemon-templates/:id", nexusHandler.UpdateDaemonTemplate)
-			nexus.Delete("/daemon-templates/:id", nexusHandler.DeleteDaemonTemplate)
-			nexus.Get("/projects", nexusHandler.ListProjects)
-			nexus.Post("/projects", nexusHandler.CreateProject)
-			nexus.Put("/projects/:id", nexusHandler.UpdateProject)
-			nexus.Delete("/projects/:id", nexusHandler.DeleteProject)
-			nexus.Post("/tasks/:id/move", nexusHandler.MoveTaskToProject)
-			nexus.Get("/saves", nexusHandler.ListSaves)
-			nexus.Post("/saves", nexusHandler.CreateSave)
-			nexus.Get("/saves/:id", nexusHandler.GetSave)
-			nexus.Put("/saves/:id", nexusHandler.UpdateSave)
-			nexus.Delete("/saves/:id", nexusHandler.DeleteSave)
-
-			// Headless run endpoints — same orchestration path as the
-			// WebSocket but driven by REST. Useful for scripted tests,
-			// debugging, and any third-party integration that doesn't
-			// want a WS connection. See nexus_run_handler.go for docs.
-			if cortexService != nil {
-				runHandler := handlers.NewNexusRunHandler(cortexService, nexusTaskStore, nexusSessionStore)
-				nexus.Post("/run", runHandler.Run)         // fire and return task_id; poll for status
-				nexus.Post("/run/sync", runHandler.RunSync) // fire and block until completion (test path)
-				log.Println("✅ Nexus run endpoints registered (POST /run, /run/sync)")
-			}
-
-			log.Println("✅ Nexus routes registered")
-		}
-
-		// RAG knowledge-base routes. Project-scoped under the same auth
-		// guard as Nexus. The Knowledge tab in the project view talks to
+		// RAG knowledge-base routes, project-scoped under the standard
+		// auth guard. The Knowledge tab in the project view talks to
 		// these; the search_knowledge tool talks to rag.Service directly
-		// (no HTTP hop). Mounted outside the nexus group because the
-		// path is /api/projects/:id/knowledge — projects are a shared
-		// concept, not exclusively a nexus surface.
+		// (no HTTP hop). The path is /api/projects/:id/knowledge —
+		// projects are a shared concept across the app.
 		if ragService != nil {
 			knowledgeHandler := handlers.NewKnowledgeHandler(ragService)
 			kb := api.Group("/projects/:project_id/knowledge", middleware.LocalAuthMiddleware(jwtAuth))
@@ -1952,13 +1740,6 @@ func main() {
 		app.Get("/ws/workflow", websocket.New(workflowWSHandler.Handle, wsConfig))
 	}
 
-	// Nexus WebSocket endpoint (requires authentication + MongoDB)
-	if nexusWSHandler != nil {
-		app.Use("/ws/nexus", wsConnectionLimiter)
-		app.Use("/ws/nexus", middleware.LocalAuthMiddleware(jwtAuth))
-		app.Get("/ws/nexus", websocket.New(nexusWSHandler.Handle, wsConfig))
-	}
-
 	// Initialize background jobs
 	jobScheduler := jobs.NewJobScheduler()
 
@@ -1979,11 +1760,6 @@ func main() {
 		// Marks executions stuck in "running" for >15 min as failed (server crash recovery)
 		orphanCleanupJob := jobs.NewOrphanExecutionCleanupJob(mongoDB, 5*time.Minute, 15*time.Minute)
 		jobScheduler.Register("orphan_execution_cleanup", orphanCleanupJob)
-
-		// Register Nexus task cleanup job (runs every 5 minutes)
-		// Marks Nexus tasks/daemons stuck in "executing" for >15 min as failed
-		nexusCleanupJob := jobs.NewNexusTaskCleanupJob(mongoDB, 5*time.Minute, 15*time.Minute)
-		jobScheduler.Register("nexus_task_cleanup", nexusCleanupJob)
 	} else {
 		log.Println("⚠️  MongoDB-dependent jobs disabled (requires MongoDB, TierService, UserService)")
 	}
@@ -2038,7 +1814,6 @@ func main() {
 	log.Printf("🔗 WebSocket endpoint: ws://localhost:%s/ws/chat", cfg.Port)
 	log.Printf("🔌 MCP endpoint: ws://localhost:%s/mcp/connect", cfg.Port)
 	log.Printf("⚡ Workflow endpoint: ws://localhost:%s/ws/workflow", cfg.Port)
-	log.Printf("🧠 Nexus endpoint: ws://localhost:%s/ws/nexus", cfg.Port)
 	log.Printf("📡 Health check: http://localhost:%s/health", cfg.Port)
 	if schedulerService != nil {
 		log.Printf("⏰ Scheduler enabled with Redis")

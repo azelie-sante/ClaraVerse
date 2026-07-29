@@ -15,7 +15,7 @@ Built with a React frontend, Go backend, and Docker Compose deployment, ClaraVer
 - **Chat** -- Multi-model conversations with file uploads, code execution, and web search built in.
 - **Skills** -- 150+ built-in tools that activate mid-conversation -- web search, image generation, data analysis, and more.
 - **Workflows** -- Visual drag-and-drop automation builder for chaining AI tasks.
-- **Nexus** -- Assign Clara long-running tasks (research, coding, analysis). Track progress on a Kanban board.
+- **Crew** -- Hire a team of agents for a project and work the card pipeline, with every card coming back for your review.
 - **Routines** -- Scheduled AI tasks that run automatically (cron-style) and report back via Telegram.
 - **Channels** -- Telegram integration -- talk to Clara from your phone, receive routine reports.
 - **Integrations** -- 150+ built-in integrations: Slack, GitHub, Jira, Google Sheets, Notion, Discord, Telegram, HubSpot, Shopify, and more. No MCP required.

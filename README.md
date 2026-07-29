@@ -126,13 +126,9 @@ docker compose -f docker-compose.production.yml down -v && docker compose -f doc
 
 ## Core Capabilities
 
-### Nexus — Your AI Command Center
+### Crew — Agent Teams With Human Review
 
-Assign Clara long-running tasks like research, coding, or analysis. Track everything on a Kanban board — you always know what she's working on and why. No black box.
-
-<p align="center">
-  <img src="docs/images/nexus.gif" alt="Nexus - AI Task Management" width="80%" />
-</p>
+Give a project a brief, hire a team of agents, and work the card pipeline. Every card comes back for your review before it ships — you always know what's being worked on and why. No black box.
 
 ### Skills in Chat
 
@@ -152,7 +148,7 @@ Talk to Clara from Telegram when you're away from the app. Set up routines that 
 
 ### 150+ Integrations & Tools Out of the Box
 
-Slack, GitHub, Jira, Google Sheets, Notion, Discord, Telegram, HubSpot, and many more — built in, no MCP required. All integrations are shared across Chat, Workflows, Nexus, and Routines. Connect once, use everywhere.
+Slack, GitHub, Jira, Google Sheets, Notion, Discord, Telegram, HubSpot, and many more — built in, no MCP required. All integrations are shared across Chat, Workflows, Crew, and Routines. Connect once, use everywhere.
 
 <p align="center">
   <img src="docs/images/integration.png" alt="150+ Integrations" width="80%" />
@@ -204,13 +200,13 @@ Use workflows with your web apps, schedule daily messages, automate repetitive t
 
 | Feature                           | Description                                                                  |
 | --------------------------------- | ---------------------------------------------------------------------------- |
-| **Nexus**                   | Assign long-running tasks, track progress on a Kanban board                  |
-| **Knowledge bases**         | Upload PDFs / MD / TXT / HTML to a project, search via hybrid vector + BM25 + reranker. Available in Chat, Nexus daemons, and Workflows |
+| **Crew**                    | Agent teams with a card pipeline and human review                            |
+| **Knowledge bases**         | Upload PDFs / MD / TXT / HTML to a project, search via hybrid vector + BM25 + reranker. Available in Chat and Workflows |
 | **Skills**                  | Context-aware tools that activate mid-conversation when needed               |
 | **Channels**                | Telegram integration — talk to Clara from your phone                        |
 | **Routines**                | Scheduled task sequences that report back via Telegram                       |
 | **Workflows**               | Drag-and-drop builder with parallel execution, scheduling, 200+ integrations |
-| **150+ Integrations**       | Slack, GitHub, Jira, Notion, and more — shared across Chat, Workflows, Nexus, and Routines |
+| **150+ Integrations**       | Slack, GitHub, Jira, Notion, and more — shared across Chat, Workflows, Crew, and Routines |
 | **Devices**                 | Connect all your machines — Clara reaches MCP on any of them remotely       |
 | **Clara Companion**         | Bridge local MCP servers to ClaraVerse over WebSocket from any machine       |
 | **Browser-Local Storage**   | Conversations stay in IndexedDB — zero-knowledge architecture               |

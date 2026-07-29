@@ -1,5 +1,5 @@
 /**
- * Nexus v2 home (/crew): your agent projects. Create a project with a brief —
+ * Crew home (/crew): your agent projects. Create a project with a brief —
  * the shared context every team member and card will see.
  */
 import { useCallback, useEffect, useState } from 'react';

@@ -10,7 +10,7 @@ const FOOTER: FooterLink[] = [
 export interface CrewSidebarProps {
   onNewProject: () => void;
   onProjects: () => void;
-  /** Opens the "getting the most out of Nexus" playbook panel. */
+  /** Opens the "getting the most out of Crew" playbook panel. */
   onHelp: () => void;
   projectsActive?: boolean;
   /** Recent crew projects as one-click shortcuts. */

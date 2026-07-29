@@ -9,7 +9,7 @@ ClaraVerse is not a chatbot. It is a complete AI workspace. Users self-host it o
 Key differentiators:
 - Workspace, not chatbot: Chat + Tasks + Workflows + Scheduling + Integrations in one platform
 - Self-hosted and private: Zero-knowledge architecture, conversations in browser IndexedDB
-- Nexus: Trello-like Kanban board where AI is your team (novel concept)
+- Crew: Trello-like Kanban board where AI is your team (novel concept)
 - 150+ built-in integrations with no MCP required
 - MCP Bridge (Clara Companion) for connecting local tools over WebSocket
 
@@ -20,10 +20,10 @@ Clara is an AI assistant with auto-activating skills. Skills include web search 
 
 Access: Sidebar → Chat
 
-### Nexus -- AI Task Management
-A Trello-like Kanban board where AI is your team. Assign Clara long-running tasks (research, coding, data analysis). Tasks flow through columns: Draft → Queued → Working → Done → Failed. Click any task card to see the full execution log. Group tasks into Projects. Clara uses 150+ integrations while working. Multi-step reasoning breaks complex requests into subtasks.
+### Crew -- Agent Teams
+A Trello-like Kanban board where AI is your team. Create a project with a brief, hire members for the roles you need, and queue cards. Cards flow through columns: Draft → Queued → Working → Review → Done. Every output stops at Review for your approval; rejecting with feedback re-queues the card with the full history. Approved work joins team memory. Clara uses 150+ integrations while working.
 
-Access: Sidebar → Nexus
+Access: Sidebar → Crew
 
 ### Visual Workflow Builder
 Drag-and-drop automation builder. Node types: Trigger, AI/LLM, Integration, Transform, Condition, Code. Supports parallel execution (branches run concurrently), cron scheduling, API triggers (expose as HTTP endpoint), 150+ integrations, version history, conditional logic. AI-assisted generation: describe workflow in plain text and Clara builds the node graph.
@@ -33,17 +33,17 @@ Access: Sidebar → Agents → + button
 ### Routines -- Scheduled Automations
 Task sequences that run on a schedule. Describe what Clara should do in natural language, set schedule (daily, weekly, custom cron), choose Telegram as reporting channel. Routines use integrations and execute multi-step task sequences.
 
-Access: Sidebar → Nexus → Routines tab
+Access: Routines view
 
 ### Channels -- Telegram Integration
-Connect a Telegram bot to chat with Clara from your phone. Receive routine reports and Nexus task notifications. One bot per user for privacy. Same skills and integrations as web app.
+Connect a Telegram bot to chat with Clara from your phone. Receive routine reports and Crew card notifications. One bot per user for privacy. Same skills and integrations as web app.
 
 Setup: Settings → Channels → paste Telegram bot token → Connect
 
 ### 150+ Built-in Integrations
 Slack, Discord, Telegram, Microsoft Teams, Jira, Linear, Asana, Trello, Notion, GitHub, GitLab, Bitbucket, Google Sheets, Google Drive, Google Calendar, Airtable, HubSpot, Salesforce, Mailchimp, Shopify, Stripe, Mixpanel, PostHog, Google Analytics, AWS S3, Google Cloud Storage, MongoDB, Redis, PostgreSQL, MySQL, Twilio, SendGrid, Zapier Webhooks, custom HTTP, and more.
 
-Setup: Settings → Integrations → enter credentials → Save. Available across Chat, Workflows, Nexus, and Routines.
+Setup: Settings → Integrations → enter credentials → Save. Available across Chat, Workflows, Crew, and Routines.
 
 ### Clara Companion -- MCP Bridge
 Go CLI bridging local MCP servers to ClaraVerse over WebSocket. Default servers: filesystem, git, memory (via npx). Install: `claraverse companion`. Login: `clara_companion login`. Start: `clara_companion`. Supports macOS (launchd), Linux (systemd), Windows (manual). Config: ~/.claraverse/mcp-config.yaml.

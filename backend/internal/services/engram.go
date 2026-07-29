@@ -13,7 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// EngramService manages Cortex's central knowledge store (Engram)
+// EngramService manages the central knowledge store (Engram)
 type EngramService struct {
 	collection *mongo.Collection
 }
@@ -21,7 +21,7 @@ type EngramService struct {
 // NewEngramService creates a new engram service
 func NewEngramService(mongodb *database.MongoDB) *EngramService {
 	return &EngramService{
-		collection: mongodb.Collection(database.CollectionNexusEngrams),
+		collection: mongodb.Collection(database.CollectionEngrams),
 	}
 }
 

@@ -31,7 +31,7 @@ Clara generates the full node graph. Review it, tweak if needed, and activate.
 - **Parallel execution.** Branches run concurrently. A workflow that fans out to five APIs finishes as fast as the slowest branch, not the sum of all five.
 - **Scheduling.** Set workflows to run on a cron schedule -- hourly, daily, weekly, or custom.
 - **API triggers.** Expose a workflow as an HTTP endpoint to call from external apps or webhooks.
-- **150+ integrations.** Use the same integrations available in Chat and Nexus -- Slack, GitHub, Google Sheets, databases, and more.
+- **150+ integrations.** Use the same integrations available in Chat and Crew -- Slack, GitHub, Google Sheets, databases, and more.
 - **Version history.** Every save creates a version. Roll back to any previous state.
 - **Conditional logic.** Branch based on data values, API responses, or AI decisions.
 

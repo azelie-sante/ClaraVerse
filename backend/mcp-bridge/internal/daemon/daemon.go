@@ -401,7 +401,7 @@ func (d *Daemon) setupBridgeHandlers() {
 		d.broadcastStatus()
 	})
 
-	// Handle persona sync pushed from the cloud Nexus UI (no-op without local brain)
+	// Handle persona sync pushed from the cloud UI (no-op without local brain)
 	d.bridge.SetPersonaSyncHandler(func(payload map[string]interface{}) {
 		log.Printf("[SYNC] Received persona sync from cloud (no local brain to apply)")
 	})

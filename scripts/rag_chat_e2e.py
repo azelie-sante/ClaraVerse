@@ -12,7 +12,7 @@ the full chat-side path:
   LLM tool call → search_knowledge dispatch → rendered in reply
 
 This is the chat-surface counterpart to scripts/rag_e2e.sh (which
-covers the Nexus daemon surface). Run both for full coverage.
+covers the project knowledge surface). Run both for full coverage.
 
 Requires the same backend + sidecars as rag_e2e.sh. The script
 assumes the rag-e2e user + project already exist with the marker
@@ -90,7 +90,7 @@ def login() -> tuple[str, str]:
 
 def find_project(token: str) -> str:
     """Returns the rag-e2e project ID. Asserts it has at least one file."""
-    projects = http_get("/api/nexus/projects", token)
+    projects = http_get("/api/crew/projects", token).get("projects", [])
     for p in projects:
         if p["name"] == "rag-e2e":
             files = http_get(f"/api/projects/{p['id']}/knowledge/files", token)

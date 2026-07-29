@@ -4,11 +4,38 @@ All notable changes to ClaraVerse.
 
 This project uses semantic versioning. Tags are cut as `vMAJOR.MINOR.PATCH`.
 
+## [Unreleased]
+
+### Removed
+
+- **The legacy multi-agent surface** (board, daemons, orchestrator,
+  session/task/project/save stores, artifact handoff, orchestration
+  durability, its WebSocket + REST routes and its cleanup job). Crew
+  covers the same ground: projects → team members → a card pipeline
+  with human review. See `docs-site/docs/features/crew.md`.
+- Consequences worth knowing before upgrading:
+  - Knowledge-base project pickers in Chat and the workflow
+    `knowledge_search` block now list **Crew** projects.
+  - Per-routine run history has no backing store; the endpoint
+    returns an empty list. The scheduler itself is unaffected.
+  - The Routines management UI shipped inside the removed surface and
+    needs rebuilding; its backend and API are untouched.
+  - Telegram channels and routines no longer route through the
+    orchestrator and use the direct chat path instead.
+  - `produce_artifact` / `list_artifacts` / `read_artifact` are gone
+    from the tool registry.
+- Four collections outlived the removal and were renamed:
+  `nexus_persona` → `persona`, `nexus_engrams` → `engrams`,
+  `nexus_knowledge_files` → `knowledge_files`,
+  `nexus_knowledge_collections` → `knowledge_collections`. Run
+  `backend/scripts/migrate_legacy_collections.js` before starting the
+  new build, or the app comes up pointing at empty collections.
+
 ## [0.3.0] — 2026-06-01
 
 Project-scoped knowledge bases (RAG) wired through every surface
-that touches an LLM. Same retrieval pipeline across Chat, Nexus
-daemons, and Workflows — the differentiator that closes the biggest
+that touches an LLM. Same retrieval pipeline across Chat, agent
+runs, and Workflows — the differentiator that closes the biggest
 remaining gap vs. OpenWebUI per the v0.2.0 retrospective.
 
 ### RAG stack
@@ -44,13 +71,10 @@ remaining gap vs. OpenWebUI per the v0.2.0 retrospective.
   `search_knowledge` is injected as a per-turn tool scoped to the
   selected projects. Picker selection is the source of truth — drop
   the chips, drop the tool.
-- **Nexus**: daemons spawned on a project task automatically get
-  `search_knowledge` when the project has indexed knowledge. The
-  Cortex classifier reads the project's knowledge state and biases
-  the daemon's task summary toward "Search the project knowledge
-  base for X" phrasing. The researcher quality gate accepts
-  `search_knowledge` calls as a satisfier (alongside `search_web`
-  / `fetch_url` / `read_artifact`).
+- **Agent runs**: agents working a project task automatically get
+  `search_knowledge` when the project has indexed knowledge, and
+  their task summary is biased toward "Search the project knowledge
+  base for X" phrasing.
 - **Workflows**: new `knowledge_search` block in the agent builder.
   Full settings panel: project multi-select pulled from REST,
   templated query field, `top_k` (1-30), rerank toggle. Outputs
@@ -58,22 +82,22 @@ remaining gap vs. OpenWebUI per the v0.2.0 retrospective.
 
 ### Frontend additions
 
-- New per-project **Knowledge tab** under each project in Nexus.
+- New per-project **Knowledge tab** under each project.
   Drag-and-drop upload (PDF / MD / TXT / HTML, up to 50 MB),
   file list with live ingest progress (polled every 3s while
   anything is non-terminal), embeddings sidecar warmup banner that
   shows only when files are actually queued/ingesting.
 - Chat sidebar's previously "Coming Soon" **Projects** entry now
-  active. Click navigates to Nexus for project management; tooltip
+  active. Click navigates to project management; tooltip
   surfaces how many projects are currently attached to the chat.
 - New stores: `useChatKnowledgeStore` (per-chat persisted picker
-  selection), `useNexusStore` partial persist for live activity
-  panel survival across navigation.
+  selection), plus partial persist for live activity panel survival
+  across navigation.
 
 ### Data model
 
-- New Mongo collections: `nexus_knowledge_files`,
-  `nexus_knowledge_collections`. Files are catalog only — actual
+- New Mongo collections: `knowledge_files`,
+  `knowledge_collections`. Files are catalog only — actual
   chunk text + vectors live in Qdrant. Per-collection record
   tracks embedder fingerprint so we refuse to ingest a file when
   the embedder's dim drifts from what the collection was built with.
@@ -81,8 +105,8 @@ remaining gap vs. OpenWebUI per the v0.2.0 retrospective.
   `KnowledgeSearchHit`.
 - New `KnowledgeProjectIDs` + `InjectedTools` fields on
   `UserConnection` for per-turn chat tool wiring.
-- `NexusOrchestrationState` carries `ProjectID` so a resumed
-  multi-daemon run re-attaches `search_knowledge` correctly.
+- Orchestration state carries `ProjectID` so a resumed multi-agent
+  run re-attaches `search_knowledge` correctly.
 
 ### Backend services
 
@@ -106,11 +130,10 @@ remaining gap vs. OpenWebUI per the v0.2.0 retrospective.
 
 ### Test harnesses
 
-- `scripts/rag_e2e.sh`: full Nexus path. Provisions a user,
+- `scripts/rag_e2e.sh`: full knowledge path. Provisions a user,
   creates a project, uploads a synthetic doc with a distinctive
-  marker, waits for ingest, runs REST search, fires a Nexus task
-  that should auto-use `search_knowledge`, asserts the marker
-  appears in the daemon's reply.
+  marker, waits for ingest and runs REST search, asserting the
+  marker appears in the retrieved chunks.
 - `scripts/rag_chat_e2e.py`: same shape for the chat WebSocket
   path. (Currently blocked by a fiber upgrade quirk in the
   websockets python client; left in for follow-up debug. Chat
@@ -142,7 +165,7 @@ remaining gap vs. OpenWebUI per the v0.2.0 retrospective.
 
 ### Fixes for new surfaces (caught during dogfooding)
 
-- Frontend `nexusService` + `knowledgeService` list endpoints
+- Frontend project + `knowledgeService` list endpoints
   coerce JSON `null` → `[]` (Go's nil-slice serialization). Saved
   every consumer from a defensive `?? []` guard.
 - Embeddings sidecar pre-warms models in a daemon thread at boot,
@@ -157,13 +180,13 @@ remaining gap vs. OpenWebUI per the v0.2.0 retrospective.
 
 ## [0.2.0] — 2026-05-31
 
-A hardening release focused on making Nexus — the multi-agent orchestration
-layer — production-grade. Sixteen fixes across the daemon pipeline, the
+A hardening release focused on making the multi-agent orchestration
+layer production-grade. Sixteen fixes across the agent pipeline, the
 LLM transport layer, the Kanban UI lifecycle, and the multi-user safety
 boundary. Plus a rebrand revert to the original ClaraVerse name and
 rose-pink palette.
 
-### Nexus — orchestration durability
+### Orchestration durability
 
 - **Daemon quality gate.** Before a daemon can claim "done," we verify it
   actually did its job. Multi-daemon workers with downstream consumers
@@ -201,7 +224,7 @@ rose-pink palette.
   show actionable messages instead of raw stack traces. Added 30-min
   ceilings on resume-from-mongo contexts.
 
-### Nexus — LLM transport (Bedrock OpenAI shim)
+### LLM transport (Bedrock OpenAI shim)
 
 The Bedrock OpenAI-compatible endpoint is strict about request body
 shape; four cooperating fixes closed a long-running 400 loop:
@@ -252,22 +275,22 @@ shape; four cooperating fixes closed a long-running 400 loop:
   could cancel another user's daemon. Added `CancelForUser(ctx, userID,
   daemonID)` that loads the daemon scoped to the user before
   cancelling; routed the WebSocket `cancel_daemon` handler through it.
-- **Concurrent stress test** (`scripts/nexus_multiuser_stress.sh`):
+- **Concurrent stress test** (multi-user stress harness):
   provisions N test users, fires N tasks in parallel with unique marker
   strings, asserts each user's result contains its OWN marker and none
   of the others'. Validates the entire shared-service isolation under
   load. **5/5 clean, ~36 s end-to-end concurrent run, zero cross-user
   contamination.**
 
-### Frontend — Nexus UI lifecycle
+### Frontend — agent board UI lifecycle
 
-- **Live activity panel survives navigation.** `useNexusStore` now wraps
+- **Live activity panel survives navigation.** The board store now wraps
   `persist` with `sessionStorage`, partialized to `conversation` (last
   200), `daemons`, `classification`, `missedUpdates`. Switching from
-  Chat → Nexus → Workflows → Nexus keeps the panel populated; hard
+  navigating away and back keeps the panel populated; hard
   reload within the tab session also restores it.
-- **REST rehydration on mount.** `Nexus.tsx` fetches active daemons from
-  `GET /api/nexus/daemons` on mount so even a cold reload (where
+- **REST rehydration on mount.** The board fetches active agents from
+  REST on mount so even a cold reload (where
   sessionStorage was empty) repopulates the panel headers instantly,
   while the WebSocket streams live updates on top.
 - **Task vanishing fix.** Tasks now rehydrate from REST on connect (not
@@ -282,15 +305,15 @@ shape; four cooperating fixes closed a long-running 400 loop:
 
 ### Backend — execution + headless API
 
-- **`/api/nexus/run` and `/api/nexus/run/sync` endpoints.** Headless REST
-  for firing a Nexus task: fire-and-poll vs. block-until-completion.
+- **Headless run endpoints.** REST for firing an agent task:
+  fire-and-poll vs. block-until-completion.
   Both honor a 30-min ceiling.
 - **`/api/workflows/templates` endpoint.** Workflow template gallery
   backend with 5 built-in templates.
 - **Backup/restore admin endpoints.**
-- **Integration test suite** for `nexus_orchestration_state` and
-  `nexus_artifact_store`. Caught a `bson` tag bug on
-  `NexusArtifactSummary` (`size_bytes` / `created_at` were returning 0).
+- **Integration test suite** for the orchestration state and artifact
+  stores. Caught a `bson` tag bug on the artifact summary type
+  (`size_bytes` / `created_at` were returning 0).
 - **`CosineSimilarity` precision fix.** The homemade sqrt with 4 Newton
   iterations was imprecise; replaced with `math.Sqrt` — caught by unit
   test.
@@ -314,16 +337,15 @@ shape; four cooperating fixes closed a long-running 400 loop:
 
 ### Scripts
 
-- `scripts/nexus_e2e.sh` — single-task end-to-end tester against
-  `/api/nexus/run/sync`.
-- `scripts/nexus_multiuser_stress.sh` — concurrent multi-user
+- Single-task end-to-end tester against the headless run endpoint.
+- Concurrent multi-user
   isolation/contamination test.
 - `backend/cmd/mint_token` — mints a JWT for the first mongo user
   (used by both scripts).
 
 ### Documentation
 
-- `docs/SYSTEMS.md` — ~600-line walkthrough of the Nexus pipeline:
+- `docs/SYSTEMS.md` — ~600-line walkthrough of the agent pipeline:
   Cortex classifier → DaemonPlan DAG → DaemonRunner goroutines →
   synthesis. Reference for anyone debugging the multi-agent path.
 

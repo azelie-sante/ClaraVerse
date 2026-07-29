@@ -45,13 +45,14 @@ Other skills to try:
 - Ask it to write and run code (requires E2B API key in your `.env`).
 - Ask it to analyze a file you uploaded.
 
-## 5. Explore Nexus
+## 5. Explore Crew
 
-Nexus lets you create persistent AI agents with custom instructions and tool access.
+Crew lets you hire a team of agents for a project and work a card pipeline,
+with every output coming back for your review.
 
-1. Click **Nexus** in the sidebar.
-2. Create a new agent -- give it a name, system instructions, and select which skills it can use.
-3. Start a conversation with your agent. It remembers its role across sessions.
+1. Click **Crew** in the sidebar.
+2. Create a project and write a brief describing the work.
+3. Hire members for the roles you need, then queue a card and review what comes back.
 
 ## What Else Can You Do?
 

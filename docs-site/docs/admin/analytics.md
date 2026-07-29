@@ -77,7 +77,7 @@ Models with low success rates may indicate configuration issues or provider-side
 
 ## Agent Execution Metrics
 
-Track Nexus agent activity:
+Track Crew agent activity:
 
 ```http
 GET /api/admin/analytics/agents

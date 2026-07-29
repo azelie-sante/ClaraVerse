@@ -11,7 +11,7 @@ keywords:
   - trello for ai agents
   - ai task management
   - ai productivity workspace
-image: /img/features/nexus.png
+image: /img/features/crew.png
 ---
 
 # AI Needs a Workspace, Not Another Chatbot
@@ -56,9 +56,9 @@ This is why we built [ClaraVerse](/) as a workspace, not a chatbot. The differen
 
 But chat is just the starting point.
 
-### Nexus -- A Trello Board Where AI Is Your Team
+### Crew -- A Trello Board Where AI Is Your Team
 
-This is the feature that changes the paradigm. [Nexus](/docs/features/nexus) is a Kanban board. You create tasks, they flow through columns -- Queued, Working, Done -- just like any project board. Except the team member picking up those tasks is AI.
+This is the feature that changes the paradigm. [Crew](/docs/features/crew) is a Kanban board. You create tasks, they flow through columns -- Queued, Working, Done -- just like any project board. Except the team member picking up those tasks is AI.
 
 Drop a card that says "Research the top 5 competitors in the project management space and summarize their pricing." Clara picks it up, works through it step by step, and moves it to Done when finished. Click the card to see the full execution log -- every tool called, every decision made, every source cited. Full transparency.
 
@@ -80,7 +80,7 @@ Want to pull open GitHub issues every morning, summarize them with AI, and post 
 
 ### 150+ Integrations -- Connected Once, Used Everywhere
 
-[ClaraVerse ships with 150+ integrations](/docs/features/integrations) out of the box. Slack, GitHub, Jira, Google Sheets, databases, CRMs, analytics platforms -- add your credentials once in Settings and they are available across **every** feature. Chat can pull data. Workflows can push updates. Nexus tasks can read and write to external services. Routines can report to any channel.
+[ClaraVerse ships with 150+ integrations](/docs/features/integrations) out of the box. Slack, GitHub, Jira, Google Sheets, databases, CRMs, analytics platforms -- add your credentials once in Settings and they are available across **every** feature. Chat can pull data. Workflows can push updates. Crew cards can read and write to external services. Routines can report to any channel.
 
 No MCP servers. No plugin marketplaces. No configuration hell. Connect once, use everywhere.
 
@@ -88,7 +88,7 @@ No MCP servers. No plugin marketplaces. No configuration hell. Connect once, use
 
 Here is what happens when these features exist in the same product instead of five different tabs in your browser:
 
-A Routine runs every morning, pulling data from Google Sheets and Jira. It creates a summary and posts it to Slack via an Integration. You see something interesting in the summary and open Chat to dig deeper -- Clara already has the context from Memory. You realize there is a bigger research task, so you drop it into Nexus. Clara picks it up, uses Integrations to pull additional data, and moves the card to Done two hours later. You review the results and build a Workflow to automate the entire pipeline going forward.
+A Routine runs every morning, pulling data from Google Sheets and Jira. It creates a summary and posts it to Slack via an Integration. You see something interesting in the summary and open Chat to dig deeper -- Clara already has the context from Memory. You realize there is a bigger research task, so you drop it into Crew. Clara picks it up, uses Integrations to pull additional data, and moves the card to Done two hours later. You review the results and build a Workflow to automate the entire pipeline going forward.
 
 Chat, tasks, workflows, scheduling, integrations, and memory -- all feeding into each other. No copy-paste. No re-explaining. No manual glue.
 

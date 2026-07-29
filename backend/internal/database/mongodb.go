@@ -43,21 +43,15 @@ const (
 	CollectionSkills     = "skills"
 	CollectionUserSkills = "user_skills"
 
-	// Nexus multi-agent system collections
-	CollectionNexusTasks           = "nexus_tasks"
-	CollectionNexusDaemons         = "nexus_daemons"
-	CollectionNexusPersona         = "nexus_persona"
-	CollectionNexusSessions        = "nexus_sessions"
-	CollectionNexusEngrams         = "nexus_engrams"
-	CollectionNexusDaemonTemplates = "nexus_daemon_templates"
-	CollectionNexusProjects        = "nexus_projects"
-	CollectionNexusSaves           = "nexus_saves"
+	// Assistant persona + long-term memory (engram) collections.
+	CollectionPersona = "persona"
+	CollectionEngrams = "engrams"
 
 	// RAG knowledge-base collections (project-scoped vector stores).
 	// Vectors themselves live in Qdrant — Mongo holds file metadata,
 	// per-project collection bookkeeping, and ingest job state.
-	CollectionNexusKnowledgeFiles       = "nexus_knowledge_files"
-	CollectionNexusKnowledgeCollections = "nexus_knowledge_collections"
+	CollectionKnowledgeFiles       = "knowledge_files"
+	CollectionKnowledgeCollections = "knowledge_collections"
 )
 
 // NewMongoDB creates a new MongoDB connection with connection pooling
@@ -256,71 +250,20 @@ func (m *MongoDB) Initialize(ctx context.Context) error {
 		return fmt.Errorf("failed to create conversation_engagement indexes: %w", err)
 	}
 
-	// Nexus tasks collection indexes (all in one call)
-	if err := m.createIndexes(ctx, CollectionNexusTasks, []mongo.IndexModel{
-		{Keys: bson.D{{Key: "userId", Value: 1}, {Key: "status", Value: 1}}},
-		{Keys: bson.D{{Key: "userId", Value: 1}, {Key: "createdAt", Value: -1}}},
-		{Keys: bson.D{{Key: "sessionId", Value: 1}, {Key: "createdAt", Value: -1}}},
-		{Keys: bson.D{{Key: "userId", Value: 1}, {Key: "projectId", Value: 1}, {Key: "status", Value: 1}}},
-	}); err != nil {
-		return fmt.Errorf("failed to create nexus_tasks indexes: %w", err)
-	}
-
-	// Nexus daemons collection indexes
-	if err := m.createIndexes(ctx, CollectionNexusDaemons, []mongo.IndexModel{
-		{Keys: bson.D{{Key: "userId", Value: 1}, {Key: "status", Value: 1}}},
-		{Keys: bson.D{{Key: "taskId", Value: 1}}},
-		{Keys: bson.D{{Key: "sessionId", Value: 1}}},
-	}); err != nil {
-		return fmt.Errorf("failed to create nexus_daemons indexes: %w", err)
-	}
-
-	// Nexus persona collection indexes
-	if err := m.createIndexes(ctx, CollectionNexusPersona, []mongo.IndexModel{
+	// Persona collection indexes
+	if err := m.createIndexes(ctx, CollectionPersona, []mongo.IndexModel{
 		{Keys: bson.D{{Key: "userId", Value: 1}, {Key: "category", Value: 1}}},
 	}); err != nil {
-		return fmt.Errorf("failed to create nexus_persona indexes: %w", err)
+		return fmt.Errorf("failed to create persona indexes: %w", err)
 	}
 
-	// Nexus sessions collection indexes
-	if err := m.createIndexes(ctx, CollectionNexusSessions, []mongo.IndexModel{
-		{Keys: bson.D{{Key: "userId", Value: 1}}, Options: options.Index().SetUnique(true)},
-	}); err != nil {
-		return fmt.Errorf("failed to create nexus_sessions indexes: %w", err)
-	}
-
-	// Nexus engrams collection indexes
-	if err := m.createIndexes(ctx, CollectionNexusEngrams, []mongo.IndexModel{
+	// Engrams collection indexes
+	if err := m.createIndexes(ctx, CollectionEngrams, []mongo.IndexModel{
 		{Keys: bson.D{{Key: "userId", Value: 1}, {Key: "type", Value: 1}}},
 		{Keys: bson.D{{Key: "sessionId", Value: 1}, {Key: "createdAt", Value: -1}}},
 		{Keys: bson.D{{Key: "expiresAt", Value: 1}}, Options: options.Index().SetExpireAfterSeconds(0)},
 	}); err != nil {
-		return fmt.Errorf("failed to create nexus_engrams indexes: %w", err)
-	}
-
-	// Nexus daemon templates collection indexes
-	if err := m.createIndexes(ctx, CollectionNexusDaemonTemplates, []mongo.IndexModel{
-		{Keys: bson.D{{Key: "userId", Value: 1}, {Key: "isActive", Value: 1}}},
-		{Keys: bson.D{{Key: "isDefault", Value: 1}}},
-		{Keys: bson.D{{Key: "slug", Value: 1}}},
-	}); err != nil {
-		return fmt.Errorf("failed to create nexus_daemon_templates indexes: %w", err)
-	}
-
-	// Nexus projects collection indexes
-	if err := m.createIndexes(ctx, CollectionNexusProjects, []mongo.IndexModel{
-		{Keys: bson.D{{Key: "userId", Value: 1}, {Key: "isArchived", Value: 1}, {Key: "sortOrder", Value: 1}}},
-	}); err != nil {
-		return fmt.Errorf("failed to create nexus_projects indexes: %w", err)
-	}
-
-	// Nexus saves collection indexes
-	if err := m.createIndexes(ctx, CollectionNexusSaves, []mongo.IndexModel{
-		{Keys: bson.D{{Key: "userId", Value: 1}, {Key: "createdAt", Value: -1}}},
-		{Keys: bson.D{{Key: "userId", Value: 1}, {Key: "tags", Value: 1}}},
-		{Keys: bson.D{{Key: "userId", Value: 1}, {Key: "sourceTaskId", Value: 1}}},
-	}); err != nil {
-		return fmt.Errorf("failed to create nexus_saves indexes: %w", err)
+		return fmt.Errorf("failed to create engrams indexes: %w", err)
 	}
 
 	log.Println("✅ MongoDB indexes initialized successfully")

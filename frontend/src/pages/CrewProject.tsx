@@ -1,5 +1,5 @@
 /**
- * Nexus v2 project board — shared app sidebar, only the main area changes.
+ * Crew project board — shared app sidebar, only the main area changes.
  * No modals: everything opens as a right-side slide-over (80% width for card
  * detail/review, 50% for creation/hire/member). Cards drag between Drafts and
  * Queued; the pipeline (working → review → done) is driven by agents + review.

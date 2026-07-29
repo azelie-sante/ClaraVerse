@@ -52,7 +52,7 @@ func (w *CrewWorker) Start(ctx context.Context) {
 	go func() {
 		t := time.NewTicker(15 * time.Second)
 		defer t.Stop()
-		log.Println("✅ Crew worker started (Nexus v2 pipeline)")
+		log.Println("✅ Crew worker started")
 		for {
 			select {
 			case <-ctx.Done():

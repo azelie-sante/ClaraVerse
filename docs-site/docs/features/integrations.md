@@ -44,7 +44,7 @@ Once configured, integrations are available in:
 
 - **Chat** -- Clara can pull data from connected services mid-conversation.
 - **Workflows** -- use integration nodes in your visual automations.
-- **Nexus** -- Clara accesses integrations while working on long-running tasks.
+- **Crew** -- Clara accesses integrations while working on project cards.
 - **Routines** -- scheduled tasks can read from and write to any connected service.
 
 Connect once, use everywhere.

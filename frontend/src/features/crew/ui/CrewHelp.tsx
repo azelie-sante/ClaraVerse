@@ -1,5 +1,5 @@
 /**
- * Nexus playbook — the "how to get the most out of this" panel, opened from
+ * Crew playbook — the "how to get the most out of this" panel, opened from
  * the sidebar. Scenarios first (what to actually use it for), then the
  * pipeline mechanics, then the levers that make outputs good.
  */
@@ -156,7 +156,7 @@ export const CrewHelp: React.FC<{ onClose: () => void }> = ({ onClose }) => (
         <section className="rounded-lg bg-[var(--color-accent)]/8 p-4">
           <div className="text-[13px] font-medium text-[var(--color-accent)]">When to use chat instead</div>
           <p className="text-[12px] text-[var(--color-text-tertiary)] mt-1 leading-relaxed">
-            Quick questions and back-and-forth exploration belong in Chat. Nexus wins when the work is a{' '}
+            Quick questions and back-and-forth exploration belong in Chat. Crew wins when the work is a{' '}
             <span className="text-[var(--color-text-secondary)]">deliverable</span>: it runs in the background, several
             tasks run in parallel, everything stops for your review, and the project remembers what was approved.
           </p>

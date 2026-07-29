@@ -6,7 +6,7 @@ sidebar_position: 1
 
 # Multi-Provider Support
 
-ClaraVerse connects to multiple AI providers at the same time. You bring your own API keys (BYOK), pick the models you want, and switch between them freely inside Chat, Workflows, Nexus, and Routines.
+ClaraVerse connects to multiple AI providers at the same time. You bring your own API keys (BYOK), pick the models you want, and switch between them freely inside Chat, Workflows, Crew, and Routines.
 
 ## How It Works
 

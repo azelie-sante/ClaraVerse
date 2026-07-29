@@ -1,7 +1,7 @@
 // Package execution — knowledge_search block.
 //
 // This block exposes the same project-scoped RAG retrieval that
-// chat and Nexus daemons get, but as an explicit workflow node.
+// chat gets, but as an explicit workflow node.
 // Configured at design time with a set of project IDs + a templated
 // query; outputs `chunks: [...]` for downstream blocks (typically an
 // llm_inference block that synthesizes them).

@@ -16,11 +16,11 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { BookOpen, Plus, X } from 'lucide-react';
-import type { NexusProject } from '@/types/nexus';
+import type { CrewProject } from '@/features/crew/api';
 
 interface Props {
   /** All projects the user has access to. Loaded by the parent. */
-  projects: NexusProject[];
+  projects: CrewProject[];
   /** Currently-selected project IDs (subset of projects). */
   selectedIds: string[];
   /** Called whenever the user adds/removes a project. */
@@ -65,7 +65,7 @@ export function KnowledgeProjectChips({ projects, selectedIds, onChange, disable
   // Drop dangling IDs (project deleted) so the chip row stays clean.
   const selected = selectedIds
     .map(id => projects.find(p => p.id === id))
-    .filter((p): p is NexusProject => Boolean(p));
+    .filter((p): p is CrewProject => Boolean(p));
 
   return (
     <div ref={containerRef} style={containerStyle}>
@@ -97,7 +97,7 @@ export function KnowledgeProjectChips({ projects, selectedIds, onChange, disable
         }}
         title={
           projects.length === 0
-            ? 'Create a project in Nexus to attach its knowledge base'
+            ? 'Create a project in Crew to attach its knowledge base'
             : 'Attach a project knowledge base to this chat'
         }
       >
@@ -116,7 +116,7 @@ export function KnowledgeProjectChips({ projects, selectedIds, onChange, disable
           <div style={popoverListStyle}>
             {projects.length === 0 ? (
               <div style={emptyStateStyle}>
-                No projects yet. Create one in Nexus and upload files to its Knowledge tab.
+                No projects yet. Create one in Crew and upload files to its Knowledge tab.
               </div>
             ) : (
               projects.map(p => {

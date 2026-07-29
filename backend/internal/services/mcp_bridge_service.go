@@ -19,7 +19,6 @@ type MCPBridgeService struct {
 	connections map[string]*models.MCPConnection // clientID -> connection
 	userConns   map[string]string                // userID -> clientID
 	registry    *tools.Registry
-	eventBus    *NexusEventBus // for notifying Nexus frontends of bridge status
 	mutex       sync.RWMutex
 }
 
@@ -33,14 +32,9 @@ func NewMCPBridgeService(db *database.DB, registry *tools.Registry) *MCPBridgeSe
 	}
 }
 
-// SetEventBus sets the Nexus event bus for broadcasting bridge status changes.
-func (s *MCPBridgeService) SetEventBus(eventBus *NexusEventBus) {
-	s.eventBus = eventBus
-}
-
 // RegisterClient registers a new MCP client connection
 func (s *MCPBridgeService) RegisterClient(userID string, registration *models.MCPToolRegistration) (*models.MCPConnection, error) {
-	log.Printf("[MCP-BRIDGE] RegisterClient: user=%s eventBus=%v tools=%d", userID, s.eventBus != nil, len(registration.Tools))
+	log.Printf("[MCP-BRIDGE] RegisterClient: user=%s tools=%d", userID, len(registration.Tools))
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -150,14 +144,6 @@ func (s *MCPBridgeService) RegisterClient(userID string, registration *models.MC
 		}
 	}()
 
-	// Notify Nexus frontends that bridge is now connected
-	if s.eventBus != nil {
-		s.eventBus.Publish(userID, NexusEvent{
-			Type: "bridge_state_updated",
-			Data: map[string]interface{}{"bridge_connected": true},
-		})
-	}
-
 	return conn, nil
 }
 
@@ -198,13 +184,6 @@ func (s *MCPBridgeService) disconnectClientLocked(clientID string, conn *models.
 
 	log.Printf("🔌 MCP client disconnected: user=%s, client=%s", userID, clientID)
 
-	// Notify Nexus frontends that bridge is no longer connected
-	if s.eventBus != nil {
-		s.eventBus.Publish(userID, NexusEvent{
-			Type: "bridge_state_updated",
-			Data: map[string]interface{}{"bridge_connected": false},
-		})
-	}
 }
 
 // UpdateHeartbeat updates the last heartbeat time for a client
@@ -394,7 +373,7 @@ func (s *MCPBridgeService) SendServerCommand(userID string, action string, paylo
 }
 
 // PushPersonaSync sends persona facts to the user's MCP bridge client (non-blocking).
-// This is used to push persona changes from the Nexus UI to the local TUI daemon.
+// This is used to push persona changes from the web UI to the local TUI daemon.
 func (s *MCPBridgeService) PushPersonaSync(userID string, facts []models.PersonaFact) {
 	s.mutex.RLock()
 	clientID, exists := s.userConns[userID]
@@ -417,7 +396,7 @@ func (s *MCPBridgeService) PushPersonaSync(userID string, facts []models.Persona
 		},
 	}
 
-	// Non-blocking send — don't stall the Nexus handler if bridge is slow
+	// Non-blocking send — don't stall the caller if the bridge is slow
 	select {
 	case conn.WriteChan <- msg:
 		log.Printf("📤 Pushed persona sync to TUI for user %s (%d facts)", userID, len(facts))

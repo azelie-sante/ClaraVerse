@@ -14,7 +14,6 @@ import {
   PrivacyPolicy,
   Skills,
   SkillEditor,
-  Nexus,
   DeviceAuth,
 } from '@/pages';
 import { ResetPassword } from '@/pages/ResetPassword';
@@ -195,24 +194,8 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: '/nexus',
-        element: (
-          <ProtectedRoute>
-            <Nexus />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: '/nexus/:projectId',
-        element: (
-          <ProtectedRoute>
-            <Nexus />
-          </ProtectedRoute>
-        ),
-      },
-      {
         // Crew — agent teams: projects → team → card pipeline with human
-        // review. New path; the legacy Nexus above stays until retired.
+        // review.
         path: '/crew',
         element: (
           <ProtectedRoute>

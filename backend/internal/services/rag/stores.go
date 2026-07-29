@@ -24,7 +24,7 @@ type FileStore struct {
 
 // NewFileStore wires a FileStore against the standard collection.
 func NewFileStore(db *database.MongoDB) *FileStore {
-	return &FileStore{col: db.Collection(database.CollectionNexusKnowledgeFiles)}
+	return &FileStore{col: db.Collection(database.CollectionKnowledgeFiles)}
 }
 
 // Create inserts a new file in "queued" state. Returns the new ID.
@@ -132,7 +132,7 @@ type CollectionStore struct {
 }
 
 func NewCollectionStore(db *database.MongoDB) *CollectionStore {
-	return &CollectionStore{col: db.Collection(database.CollectionNexusKnowledgeCollections)}
+	return &CollectionStore{col: db.Collection(database.CollectionKnowledgeCollections)}
 }
 
 // GetOrCreate returns the per-project collection record, creating it

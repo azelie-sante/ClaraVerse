@@ -72,7 +72,7 @@ func NewExecutorRegistry(
 
 			// === Knowledge / RAG ==========================================
 			// Project-scoped retrieval block. Returns chunks for downstream
-			// LLM consumption. Same backend Service as chat + Nexus tools —
+			// LLM consumption. Same backend Service as the chat tools —
 			// just exposed as an explicit node in the visual workflow.
 			"knowledge_search": NewKnowledgeSearchExecutor(ragService),
 		},

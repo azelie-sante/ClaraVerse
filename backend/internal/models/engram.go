@@ -6,7 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// EngramEntry represents a single entry in Cortex's central knowledge store
+// EngramEntry represents a single entry in the central knowledge store
 type EngramEntry struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	SessionID primitive.ObjectID `bson:"sessionId" json:"session_id"`
@@ -16,7 +16,7 @@ type EngramEntry struct {
 	Key     string `bson:"key" json:"key"`         // e.g. "task_abc_result","daemon_1_final"
 	Value   string `bson:"value" json:"value"`     // JSON content
 	Summary string `bson:"summary" json:"summary"` // One-line summary for quick context loading
-	Source  string `bson:"source" json:"source"`   // "cortex","daemon_xyz","user","routine"
+	Source  string `bson:"source" json:"source"`   // "user","routine","agent"
 
 	// TTL for status entries (auto-cleanup)
 	ExpiresAt *time.Time `bson:"expiresAt,omitempty" json:"expires_at,omitempty"`

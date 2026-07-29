@@ -31,7 +31,6 @@ type RoutineService struct {
 	chatService    *ChatService
 	mcpService     *MCPBridgeService
 	toolService    *ToolService
-	cortexService  *CortexService
 }
 
 // NewRoutineService creates a new routine service
@@ -67,11 +66,6 @@ func (s *RoutineService) SetMCPBridgeService(svc *MCPBridgeService) {
 // SetToolService sets the tool service for credential-filtered tool definitions
 func (s *RoutineService) SetToolService(svc *ToolService) {
 	s.toolService = svc
-}
-
-// SetCortexService sets the Cortex orchestrator for Nexus-powered routine execution
-func (s *RoutineService) SetCortexService(svc *CortexService) {
-	s.cortexService = svc
 }
 
 // Start loads all enabled routines and starts the scheduler
@@ -499,17 +493,7 @@ func (s *RoutineService) executeRoutine(routine *models.Routine) {
 	var resultText string
 	var success bool
 
-	// Route through Cortex if available (enables multi-agent execution for routines)
-	if s.cortexService != nil {
-		result, err := s.cortexService.HandleRoutineSync(ctx, routine.UserID, routine.Prompt, routine.ModelID, routine.ID)
-		if err != nil {
-			resultText = fmt.Sprintf("Routine failed (Cortex): %v", err)
-			success = false
-		} else {
-			resultText = result
-			success = true
-		}
-	} else if s.chatService != nil {
+	if s.chatService != nil {
 		// Build system prompt for routine execution
 		systemPrompt := fmt.Sprintf(
 			"You are Dobby, an AI assistant executing a scheduled routine. "+

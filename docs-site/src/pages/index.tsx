@@ -13,10 +13,10 @@ const features = [
     link: '/docs/features/chat',
   },
   {
-    title: 'Nexus',
+    title: 'Crew',
     icon: '\u{1F9E0}',
-    desc: 'Assign long-running tasks like research and coding. Track on a Kanban board.',
-    link: '/docs/features/nexus',
+    desc: 'Agent teams that work a card pipeline. Every output comes back for your review.',
+    link: '/docs/features/crew',
   },
   {
     title: 'Workflows',

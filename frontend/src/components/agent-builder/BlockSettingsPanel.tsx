@@ -5382,7 +5382,7 @@ function RetrySettings({ retryConfig, onChange }: RetrySettingsProps) {
 // ============================================================================
 //
 // Renders the config UI for the `knowledge_search` workflow block.
-// Loads the user's Nexus projects from REST, lets them check off one
+// Loads the user's Crew projects from REST, lets them check off one
 // or more, plus tune the query template + top_k + rerank toggle.
 //
 // Why this lives as its own component (not inline in the big
@@ -5412,9 +5412,9 @@ function KnowledgeSearchSettings({
     let cancelled = false;
     setLoading(true);
     // Inline import — keeping the top-of-file import surface tidy.
-    // The Nexus service is already bundled, no extra chunk.
-    import('@/services/nexusService')
-      .then(({ nexusService }) => nexusService.listProjects())
+    // The Crew API client is already bundled, no extra chunk.
+    import('@/features/crew/api')
+      .then(({ crewApi }) => crewApi.listProjects())
       .then(list => {
         if (cancelled) return;
         setProjects(list.map(p => ({ id: p.id, name: p.name })));
@@ -5499,7 +5499,7 @@ function KnowledgeSearchSettings({
           </div>
         ) : projects.length === 0 ? (
           <div className="p-3 rounded-lg bg-white/5 text-xs text-[var(--color-text-tertiary)]">
-            No projects yet. Create one in Nexus and upload files to its Knowledge tab,
+            No projects yet. Create one in Crew and upload files to its Knowledge tab,
             then come back here.
           </div>
         ) : (

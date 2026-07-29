@@ -3,18 +3,15 @@
 # RAG end-to-end smoke test.
 #
 # Walks the full path: provision a user → create a project → upload a
-# document → wait for ingestion → search via the REST API → fire a
-# Nexus task on the project and verify the daemon actually used
-# search_knowledge (not just hallucinated). Each step asserts and
-# prints, so a failure tells you exactly where the wire broke.
+# document → wait for ingestion → search via the REST API. Each step
+# asserts and prints, so a failure tells you exactly where the wire
+# broke.
 #
 # What it proves on success:
 #   - Qdrant sidecar reachable, accepting collection creation
 #   - Embeddings sidecar produces dense + sparse vectors
 #   - Worker drains queue, chunks + embeds + upserts
 #   - Search returns relevant chunks with citations
-#   - search_knowledge tool is registered on the daemon
-#   - Daemon prefers project knowledge over web search
 #
 # Usage:
 #   ./scripts/rag_e2e.sh
@@ -22,7 +19,6 @@
 # Env overrides:
 #   BASE_URL=http://localhost:3001   backend URL
 #   PASSWORD=RagTest1!               throwaway user password
-#   TIMEOUT=300                      Nexus task ceiling (seconds)
 #   INGEST_TIMEOUT=180               wait for file → ready (seconds)
 #
 # Exit codes:
@@ -94,13 +90,13 @@ AUTH=(-H "Authorization: Bearer $TOKEN")
 # ─── Phase 2: project ───────────────────────────────────────────────
 echo "── Project ──"
 # Look for an existing rag-e2e project; create if missing.
-PROJECTS=$(curl -sS "${AUTH[@]}" "$BASE_URL/api/nexus/projects")
-PROJECT_ID=$(echo "$PROJECTS" | jq -r '.[] | select(.name=="rag-e2e") | .id' | head -1)
+PROJECTS=$(curl -sS "${AUTH[@]}" "$BASE_URL/api/crew/projects")
+PROJECT_ID=$(echo "$PROJECTS" | jq -r '.projects[]? | select(.name=="rag-e2e") | .id' | head -1)
 if [[ -z "$PROJECT_ID" ]]; then
   CREATE=$(curl -sS "${AUTH[@]}" \
-    -X POST "$BASE_URL/api/nexus/projects" \
+    -X POST "$BASE_URL/api/crew/projects" \
     -H "Content-Type: application/json" \
-    -d '{"name":"rag-e2e","icon":"book","color":"#e91e63"}')
+    -d '{"name":"rag-e2e","brief":"RAG end-to-end smoke test project"}')
   PROJECT_ID=$(echo "$CREATE" | jq -r .id)
   if [[ -z "$PROJECT_ID" || "$PROJECT_ID" == "null" ]]; then
     echo "   ✗ project create failed:" >&2
@@ -116,7 +112,7 @@ fi
 echo "── Upload test doc ──"
 # Synthetic doc with a very distinctive fact the model couldn't possibly
 # know from training data. Our query will probe for the marker phrase;
-# if the daemon's answer includes it we know search_knowledge actually
+# if the answer includes it we know search_knowledge actually
 # fired (not a hallucination).
 MARKER="The internal codename for the Q9 launch is BLUEMORPHO-XJ47."
 cat > "$WORK/test.md" <<MD
@@ -206,46 +202,6 @@ if ! echo "$SEARCH" | jq -r '.hits[].text' | grep -qi "BLUEMORPHO"; then
   exit 1
 fi
 echo "   ✓ marker found in retrieved chunks"
-
-# ─── Phase 6: Nexus task that should use search_knowledge ──────────
-echo "── Nexus task (project-scoped, should auto-use search_knowledge) ──"
-TASK_BODY=$(jq -nc \
-  --arg p "Research the internal codename for the Q9 launch in this project's knowledge base, and tell me what it is. Cite the file." \
-  --arg proj "$PROJECT_ID" \
-  --argjson t "$TIMEOUT" \
-  '{prompt:$p, project_id:$proj, timeout_seconds:$t}')
-TASK=$(mktemp)
-CODE=$(curl -sS "${AUTH[@]}" -o "$TASK" -w "%{http_code}" \
-  -X POST "$BASE_URL/api/nexus/run/sync" \
-  -H "Content-Type: application/json" \
-  --max-time "$((TIMEOUT + 30))" \
-  -d "$TASK_BODY")
-if [[ "$CODE" != "200" ]]; then
-  echo "   ✗ task HTTP $CODE:" >&2
-  cat "$TASK" >&2
-  exit 1
-fi
-STATUS=$(jq -r .task.status "$TASK")
-SUMMARY=$(jq -r '.task.result.summary // ""' "$TASK")
-echo "   task status=$STATUS"
-echo "   summary (first 400 chars):"
-echo "$SUMMARY" | head -c 400
-echo
-echo
-
-if [[ "$STATUS" != "completed" ]]; then
-  ERR=$(jq -r '.task.error // ""' "$TASK")
-  echo "   ✗ task did not complete: $ERR" >&2
-  exit 1
-fi
-if ! echo "$SUMMARY" | grep -qi "BLUEMORPHO"; then
-  echo "   ⚠ daemon answer did not include the marker — search_knowledge"
-  echo "     may not have been called, or the LLM ignored its output."
-  echo "     Check backend logs for [DAEMON ...] Injected search_knowledge"
-  exit 1
-fi
-echo "   ✓ daemon answer contained the marker — search_knowledge fired"
-echo
 
 echo "═══════════════════════════════════════════════════════════════"
 echo "✅ RAG end-to-end PASSED"

@@ -11,7 +11,7 @@ import (
 	"claraverse/internal/tools"
 )
 
-// CrewExecAdapter lets the Nexus v2 worker reuse the battle-tested headless
+// CrewExecAdapter lets the Crew worker reuse the battle-tested headless
 // tool-loop (AgentBlockExecutor) WITHOUT the DAG: one synthetic llm_inference
 // block per card run. Implements services.CrewExecutor.
 type CrewExecAdapter struct {

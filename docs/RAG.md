@@ -2,7 +2,7 @@
 
 **Status:** approved, building Phase A
 **Owner:** ClaraLille
-**Goal:** project-scoped knowledge that's shared across Chat, Nexus, and Workflows. Quality bar: as good as the engineering allows without paying anyone.
+**Goal:** project-scoped knowledge that's shared across Chat, Crew, and Workflows. Quality bar: as good as the engineering allows without paying anyone.
 
 ## TL;DR
 
@@ -10,7 +10,6 @@
 Projects ARE the knowledge container.
   Upload files to a project → its knowledge base is built.
   Chat picks one or more projects → search_knowledge fans across them.
-  Nexus tasks live in a project → daemons get search_knowledge automatically.
   Workflows use an explicit KnowledgeSearch block (project_ids + query).
 ```
 
@@ -61,14 +60,14 @@ Two sidecars: **`qdrant`** (binary, official image) and **`embeddings`** (our Py
 
 ### Mongo (metadata)
 
-- **`nexus_knowledge_files`** — uploaded file metadata
+- **`knowledge_files`** — uploaded file metadata
   ```
   { _id, project_id, user_id, filename, content_type, size_bytes,
     sha256, status: "queued" | "ingesting" | "ready" | "failed",
     error?, chunk_count, created_at, ingested_at }
   ```
 
-- **`nexus_knowledge_collections`** — per-project collection record
+- **`knowledge_collections`** — per-project collection record
   ```
   { _id, project_id, user_id, qdrant_collection: "kb_<project_id>",
     embedder_id, embedder_dims, sparse_enabled, doc_count, chunk_count,
@@ -99,7 +98,7 @@ Why per-project collection (not one mega-collection with payload filter):
 File arrives
   ↓
 1. Persist raw bytes to backend/uploads/kb/<project>/<sha256>.<ext>
-   Insert nexus_knowledge_files with status="queued"
+   Insert knowledge_files with status="queued"
   ↓
 2. Background worker picks up queued files (one at a time per project,
    parallel across projects). Marks status="ingesting".
@@ -130,7 +129,7 @@ File arrives
   ↓
 7. Upsert to Qdrant with full payload
   ↓
-8. Update nexus_knowledge_files status="ready", record chunk_count
+8. Update knowledge_files status="ready", record chunk_count
 ```
 
 Failures: mark `status="failed"` with `error`, surface in UI with a retry button.
@@ -173,11 +172,10 @@ NewKnowledgeSearchTool(ragService *RAGService)
   - Name: "search_knowledge"
   - Params: { query: string, project_ids?: []string, top_k?: int, rerank?: bool }
   - Category: "knowledge"
-  - Default project_ids = [task.project_id] when called from a Nexus daemon
   - Default project_ids = chat.selected_project_ids when called from chat
 ```
 
-Daemons see this tool when their task's project has a non-empty knowledge base. The **researcher quality gate** treats a `search_knowledge` call as equally satisfying to `search_web` — so a researcher daemon working in a project with knowledge can satisfy its obligation by searching internal docs.
+Callers see this tool when the project has a non-empty knowledge base.
 
 The Cortex classifier also gains a bias: if the task is in a project with knowledge, prefer `daemon` mode with research role over `quick` mode.
 
@@ -194,10 +192,6 @@ The Cortex classifier also gains a bias: if the task is in a project with knowle
 Users can attach 0 or more projects per chat. The send request now carries `knowledge_project_ids: string[]`. When non-empty, the LLM gets `search_knowledge` as a tool with those project IDs as defaults.
 
 A chat with no projects attached has no knowledge tool — model talks from its own knowledge only. (This matches what users expect: "open new chat, just talk to the model.")
-
-### Nexus (project-scoped, automatic)
-
-Tasks already live in a project. No new UI. Daemons running on a project task automatically get `search_knowledge` with `project_ids=[task.project_id]` as the default. If the project has 0 files, the tool isn't registered at all.
 
 ### Workflows (explicit block)
 
@@ -267,7 +261,7 @@ In order of impact, with status:
 
 ## Authorization model
 
-Strict: a user can only attach a project to chat / Nexus / workflow if they own it (or have been granted access — future). `search_knowledge` ALWAYS filters Qdrant by `project_id IN <user's accessible projects>`. Cross-tenant leaks would be a critical bug — fail-closed on the server side, never trust the client to filter.
+Strict: a user can only attach a project to chat / workflow if they own it (or have been granted access — future). `search_knowledge` ALWAYS filters Qdrant by `project_id IN <user's accessible projects>`. Cross-tenant leaks would be a critical bug — fail-closed on the server side, never trust the client to filter.
 
 When a user is deleted, their projects' Qdrant collections are deleted (cascade). When a project is deleted, its collection is deleted. Both via background cleanup job; no orphan vectors.
 

@@ -65,7 +65,7 @@ func NewService(db *database.MongoDB, qdrantURL, embeddingsURL, uploadRoot strin
 func (s *Service) EmbeddingsClient() *EmbeddingsClient { return s.embed }
 
 // HasKnowledge returns true if the project has at least one ready
-// file. Used by the Cortex classifier and the daemon tool wiring to
+// file. Used by the tool wiring to
 // decide whether to surface search_knowledge for this task at all.
 func (s *Service) HasKnowledge(ctx context.Context, userID string, projectID primitive.ObjectID) bool {
 	c, err := s.collections.Get(ctx, userID, projectID)

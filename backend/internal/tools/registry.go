@@ -471,13 +471,6 @@ func registerBuiltInTools(r *Registry) {
 	_ = r.Register(NewAddMemoryTool())
 	_ = r.Register(NewSearchMemoryTool())
 
-	// Nexus structured-artifact handoff tools. Available to daemons; the
-	// NexusArtifactAccess implementation is injected by cortex/daemon
-	// runner at execution time with session_id pre-bound.
-	_ = r.Register(NewProduceArtifactTool())
-	_ = r.Register(NewListArtifactsTool())
-	_ = r.Register(NewReadArtifactTool())
-
 	// Register 0G blockchain tools
 	_ = r.Register(NewZeroGTokenTransfersTool())
 	_ = r.Register(NewZeroGContractABITool())

@@ -28,7 +28,7 @@ Each model entry includes:
 | `supports_vision` | Whether the model accepts image inputs |
 | `supports_streaming` | Whether the model supports streamed responses |
 | `visible` | Whether users can see and select this model |
-| `agents_enabled` | Whether this model can be used with Nexus agents |
+| `agents_enabled` | Whether this model can be used with Crew agents |
 
 ## Creating a Model
 

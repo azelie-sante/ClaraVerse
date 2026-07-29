@@ -17,11 +17,11 @@ ClaraVerse is a complete AI workspace, not just a chatbot. Users self-host it on
 ### Features
 
 - **Chat with Skills**: AI conversations with auto-activating tools -- web search, image generation, code execution, data analysis, document tools. No manual toggling.
-- **Nexus (AI Task Management)**: A Trello-like Kanban board where AI is your team. Assign long-running tasks (research, coding, analysis), track progress through Draft → Queued → Working → Done → Failed columns.
+- **Crew (Agent Teams)**: A Trello-like Kanban board where AI is your team. Hire members for a project and queue cards; they flow through Draft → Queued → Working → Review → Done, with every output stopping at Review for your approval.
 - **Visual Workflow Builder**: Drag-and-drop automation builder with parallel execution, scheduling, API triggers, conditional logic, and 150+ integrations.
 - **Routines**: Scheduled AI tasks that run on cron schedules and report results via Telegram.
 - **Channels**: Telegram integration -- chat with Clara from your phone.
-- **150+ Built-in Integrations**: Slack, GitHub, Jira, Google Sheets, Notion, Discord, HubSpot, Shopify, databases, and more. Connect once, use across Chat, Workflows, Nexus, and Routines.
+- **150+ Built-in Integrations**: Slack, GitHub, Jira, Google Sheets, Notion, Discord, HubSpot, Shopify, databases, and more. Connect once, use across Chat, Workflows, Crew, and Routines.
 - **Clara Companion (MCP Bridge)**: Go CLI that bridges local MCP servers (filesystem, git, memory) to ClaraVerse over WebSocket from any machine.
 - **Artifacts**: AI-generated interactive content (charts, games, apps) rendered inline in chat.
 - **Memory System**: Clara remembers context across conversations and auto-archives old memories.
@@ -64,7 +64,7 @@ clara_companion
 - Introduction: https://claraverse-docs.netlify.app/docs/intro
 - Installation: https://claraverse-docs.netlify.app/docs/getting-started/installation
 - Chat: https://claraverse-docs.netlify.app/docs/features/chat
-- Nexus: https://claraverse-docs.netlify.app/docs/features/nexus
+- Crew: https://claraverse-docs.netlify.app/docs/features/crew
 - Workflows: https://claraverse-docs.netlify.app/docs/features/workflows
 - Routines: https://claraverse-docs.netlify.app/docs/features/routines
 - Channels: https://claraverse-docs.netlify.app/docs/features/channels

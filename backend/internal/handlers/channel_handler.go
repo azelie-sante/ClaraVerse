@@ -68,7 +68,6 @@ type ChannelHandler struct {
 	memorySelectionService  *services.MemorySelectionService  // Memory injection
 	memoryExtractionService *services.MemoryExtractionService // Memory extraction
 	userService             *services.UserService             // User preferences
-	cortexService           *services.CortexService           // Nexus orchestrator
 }
 
 // NewChannelHandler creates a new channel handler
@@ -121,12 +120,6 @@ func (h *ChannelHandler) SetUserService(svc *services.UserService) {
 // SetChatService sets the chat service (for late initialization)
 func (h *ChannelHandler) SetChatService(chatService *services.ChatService) {
 	h.chatService = chatService
-}
-
-// SetCortexService sets the Cortex orchestrator for Nexus-powered Telegram responses
-func (h *ChannelHandler) SetCortexService(svc *services.CortexService) {
-	h.cortexService = svc
-	log.Println("✅ [CHANNEL] Cortex service set for Nexus-powered Telegram responses")
 }
 
 // ============================================================================
@@ -498,35 +491,6 @@ func (h *ChannelHandler) processTelegramMessage(channel *models.Channel, update 
 
 	// Add user message to session history
 	h.channelService.AddMessageToSession(ctx, session.ID, "user", text, channel.MaxHistoryMessages)
-
-	// Route through Cortex if available (enables multi-agent Nexus execution)
-	if h.cortexService != nil {
-		cortexResult, cortexErr := h.cortexService.HandleUserMessageSync(ctx, channel.UserID, text, channel.DefaultModelID)
-		cancelTyping()
-
-		if cortexErr != nil {
-			log.Printf("❌ [TELEGRAM] Cortex error: %v, falling back to direct chat", cortexErr)
-			// Fallback: re-start typing for direct chat path
-			typingCtx, typingCancel := context.WithCancel(ctx)
-			cancelTyping = typingCancel
-			go h.channelService.SendContinuousTypingAction(typingCtx, botToken, chatID)
-		} else {
-			// Add response to session and send
-			h.channelService.AddMessageToSession(ctx, session.ID, "assistant", cortexResult, channel.MaxHistoryMessages)
-			h.channelService.IncrementMessageCount(ctx, channel.ID)
-			if err := h.channelService.SendTelegramMessageChunked(ctx, botToken, chatID, cortexResult); err != nil {
-				log.Printf("❌ [TELEGRAM] Failed to send Cortex response: %v", err)
-			} else {
-				log.Printf("✅ [TELEGRAM/CORTEX] Sent response to chat %d (%d chars)", chatID, len(cortexResult))
-			}
-			// Extract memories from conversation
-			if h.memoryExtractionService != nil {
-				go h.queueMemoryExtraction(context.Background(), channel, session,
-					[]map[string]interface{}{{"role": "user", "content": text}}, cortexResult)
-			}
-			return
-		}
-	}
 
 	// Build conversation history for AI
 	history, _ := h.channelService.GetSessionHistory(ctx, session.ID)

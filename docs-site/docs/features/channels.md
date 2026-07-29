@@ -31,7 +31,7 @@ ClaraVerse confirms the connection. You can now message Clara directly in Telegr
 
 - **Chat with Clara.** Send messages in Telegram and get AI responses, just like in the web app.
 - **Receive routine reports.** When a Routine completes, its results are sent to your Telegram chat automatically.
-- **Get notifications.** Nexus task completions and other events can be routed to Telegram.
+- **Get notifications.** Crew card completions and other events can be routed to Telegram.
 
 ## Key Details
 

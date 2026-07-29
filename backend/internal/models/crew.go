@@ -6,7 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// ─── Nexus v2 ("Crew") — the from-scratch agents rebuild ─────────────────────
+// ─── Crew — the from-scratch agents rebuild ──────────────────────────────────
 //
 // Design (user-specified, 2026-07-29):
 //   - A PROJECT is the unit of work: a brief every member and card can see —

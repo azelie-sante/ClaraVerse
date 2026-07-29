@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"strconv"
-
 	"claraverse/internal/models"
 	"claraverse/internal/services"
 
@@ -15,7 +13,6 @@ type RoutineHandler struct {
 	routineService *services.RoutineService
 	channelService *services.ChannelService
 	mcpService     *services.MCPBridgeService
-	taskStore      *services.NexusTaskStore
 }
 
 // NewRoutineHandler creates a new routine handler
@@ -35,68 +32,17 @@ func (h *RoutineHandler) SetMCPBridgeService(svc *services.MCPBridgeService) {
 	h.mcpService = svc
 }
 
-// SetTaskStore sets the task store for routine run history
-func (h *RoutineHandler) SetTaskStore(store *services.NexusTaskStore) {
-	h.taskStore = store
-}
-
-// GetRoutineRuns returns the execution history for a specific routine
+// GetRoutineRuns returns the execution history for a specific routine.
+//
+// Run history used to be persisted as multi-agent tasks. That store was removed
+// along with the rest of that surface, so there is currently no
+// backing store for per-routine history and this always reports an empty
+// list. The endpoint is kept so the existing clients keep working.
 func (h *RoutineHandler) GetRoutineRuns(c *fiber.Ctx) error {
-	userID := c.Locals("user_id").(string)
-	routineIDStr := c.Params("id")
-
-	routineOID, err := primitive.ObjectIDFromHex(routineIDStr)
-	if err != nil {
+	if _, err := primitive.ObjectIDFromHex(c.Params("id")); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid routine ID"})
 	}
-
-	if h.taskStore == nil {
-		return c.JSON([]interface{}{})
-	}
-
-	limit := int64(20)
-	if l, err := strconv.ParseInt(c.Query("limit", "20"), 10, 64); err == nil && l > 0 && l <= 100 {
-		limit = l
-	}
-
-	tasks, err := h.taskStore.GetByRoutineID(c.Context(), userID, routineOID, limit)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	// Map to a lean response format
-	type RoutineRun struct {
-		ID          string  `json:"id"`
-		Status      string  `json:"status"`
-		Mode        string  `json:"mode"`
-		Goal        string  `json:"goal"`
-		Summary     string  `json:"summary,omitempty"`
-		Error       string  `json:"error,omitempty"`
-		CreatedAt   string  `json:"created_at"`
-		CompletedAt *string `json:"completed_at,omitempty"`
-	}
-
-	runs := make([]RoutineRun, 0, len(tasks))
-	for _, t := range tasks {
-		run := RoutineRun{
-			ID:        t.ID.Hex(),
-			Status:    string(t.Status),
-			Mode:      t.Mode,
-			Goal:      t.Goal,
-			Error:     t.Error,
-			CreatedAt: t.CreatedAt.Format("2006-01-02T15:04:05Z"),
-		}
-		if t.Result != nil {
-			run.Summary = t.Result.Summary
-		}
-		if t.CompletedAt != nil {
-			s := t.CompletedAt.Format("2006-01-02T15:04:05Z")
-			run.CompletedAt = &s
-		}
-		runs = append(runs, run)
-	}
-
-	return c.JSON(runs)
+	return c.JSON([]interface{}{})
 }
 
 // ListRoutines returns all routines for the authenticated user

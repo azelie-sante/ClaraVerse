@@ -21,7 +21,7 @@ type PersonaService struct {
 // NewPersonaService creates a new persona service
 func NewPersonaService(mongodb *database.MongoDB) *PersonaService {
 	return &PersonaService{
-		collection: mongodb.Collection(database.CollectionNexusPersona),
+		collection: mongodb.Collection(database.CollectionPersona),
 	}
 }
 

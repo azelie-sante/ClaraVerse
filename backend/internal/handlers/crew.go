@@ -17,7 +17,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-// CrewHandler is the REST surface for Nexus v2 (projects → members → cards).
+// CrewHandler is the REST surface for Crew (projects → members → cards).
 type CrewHandler struct {
 	svc     *services.CrewService
 	planner CrewPlanner

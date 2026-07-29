@@ -305,7 +305,7 @@ func (s *ChatService) SetModelAliases(providerID int, aliases map[string]models.
 // the bare API model name (e.g. "zai.glm-5") that providers like Bedrock
 // expect. Returns the input unchanged if it doesn't look up to a row.
 //
-// Centralised here so every caller of the alias resolver (chat, Nexus cortex
+// Centralised here so every caller of the alias resolver (chat,
 // classifier, tool predictor, memory pool, daemon runner, etc.) gets the
 // correct upstream identifier without having to remember to fix it.
 func (s *ChatService) normalizeAPIModelName(name string) string {
@@ -3718,7 +3718,7 @@ func intFromJSON(v interface{}) int {
 // providerSupportsPromptCaching reports whether the provider behind baseURL
 // honors message-level cache_control markers on chat-completions requests.
 //
-// Bedrock removed from the list as of the Nexus 400-loop incident: their
+// Bedrock removed from the list as of the 400-loop incident: their
 // /openai/v1 shim rejects message-level cache_control with a JSON parse
 // error ("Unterminated string starting at: line 1 column 11") which
 // triggers infinite 3-retry loops on every daemon. Bedrock auto-caches

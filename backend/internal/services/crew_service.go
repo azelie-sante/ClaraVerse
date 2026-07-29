@@ -16,7 +16,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// CrewService persists Nexus v2 projects, members and cards, and enforces the
+// CrewService persists Crew projects, members and cards, and enforces the
 // pipeline: draft → queued → working → review → done (review can re-queue).
 type CrewService struct {
 	projects *mongo.Collection
