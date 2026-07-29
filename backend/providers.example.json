@@ -1,0 +1,11 @@
+{
+  "providers": [
+    {
+      "name": "Example OpenAI-compatible Provider",
+      "base_url": "https://api.example.com/v1",
+      "api_key": "YOUR_API_KEY_HERE",
+      "enabled": false,
+      "filters": [{ "pattern": "*", "action": "include", "priority": 10 }]
+    }
+  ]
+}

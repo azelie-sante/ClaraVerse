@@ -31,6 +31,8 @@ import {
   E2BSettings,
   IntegrationSettings,
 } from '@/pages/admin';
+import CrewHome from '@/pages/CrewHome';
+import CrewProjectPage from '@/pages/CrewProject';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useAuthStore } from '@/store/useAuthStore';
 
