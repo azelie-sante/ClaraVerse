@@ -273,6 +273,28 @@ func (db *DB) runMigrations() error {
 		}
 	}
 
+	// Migration: Add lite_mode column to models table (if missing)
+	if exists, _ := tableExists("models"); exists {
+		if colExists, _ := columnExists("models", "lite_mode"); !colExists {
+			log.Println("📦 Running migration: Adding lite_mode to models table")
+			if _, err := db.Exec("ALTER TABLE models ADD COLUMN lite_mode BOOLEAN DEFAULT FALSE COMMENT 'Skip memory, skill prompts and tool prediction for speed'"); err != nil {
+				return fmt.Errorf("failed to add lite_mode to models: %w", err)
+			}
+			log.Println("✅ Migration completed: models.lite_mode added")
+		}
+	}
+
+	// Migration: Add lite_mode column to model_aliases table (if missing)
+	if exists, _ := tableExists("model_aliases"); exists {
+		if colExists, _ := columnExists("model_aliases", "lite_mode"); !colExists {
+			log.Println("📦 Running migration: Adding lite_mode to model_aliases table")
+			if _, err := db.Exec("ALTER TABLE model_aliases ADD COLUMN lite_mode BOOLEAN DEFAULT FALSE COMMENT 'Skip memory, skill prompts and tool prediction for speed'"); err != nil {
+				return fmt.Errorf("failed to add lite_mode to model_aliases: %w", err)
+			}
+			log.Println("✅ Migration completed: model_aliases.lite_mode added")
+		}
+	}
+
 	// Migration: Add created_at and updated_at timestamps to models (if missing)
 	if exists, _ := tableExists("models"); exists {
 		if colExists, _ := columnExists("models", "created_at"); !colExists {
