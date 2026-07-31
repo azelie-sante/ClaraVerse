@@ -1698,6 +1698,11 @@ func (s *ChatService) StreamChatCompletion(userConn *models.UserConnection) erro
 		return fmt.Errorf("failed to get config: %w", err)
 	}
 
+	policy := s.turnPolicyFor(userConn.ModelID)
+	if policy.ToolStrategy == ToolsEssentialsOnly {
+		log.Printf("⚡ [LITE] Lite mode active for model %s — skipping memory, skill prompt and tool prediction", userConn.ModelID)
+	}
+
 	// Get messages from cache instead of userConn.Messages
 	messages := s.getConversationMessages(userConn.ConversationID)
 
@@ -1833,37 +1838,25 @@ func (s *ChatService) StreamChatCompletion(userConn *models.UserConnection) erro
 			// 🎯 SKILL-FIRST TOOL SELECTION: If a skill was routed, its RequiredTools
 			// drive tool selection. Only essential utility tools + skill's required tools pass through.
 			if activeSkill != nil && len(activeSkill.RequiredTools) > 0 {
-				// Essential tools that every skill gets access to (core utilities)
-				essentialTools := map[string]bool{
-					"ask_user":        true, // Always allow asking user for clarification
-					"search_web":      true, // Web search for research
-					"search_images":   true, // Image search
-					"get_current_time": true, // Time utility
-					"calculate_math":  true, // Math utility
-					"scrape_web":      true, // Read web page content
-					"download_file":   true, // Download files from URLs
-					"describe_image":  true, // Understand uploaded images
-				}
-
 				// Build the skill's required tool set
 				skillToolSet := make(map[string]bool, len(activeSkill.RequiredTools))
 				for _, t := range activeSkill.RequiredTools {
 					skillToolSet[t] = true
 				}
 
-				filtered := make([]map[string]interface{}, 0, len(activeSkill.RequiredTools)+len(essentialTools))
+				filtered := make([]map[string]interface{}, 0, len(activeSkill.RequiredTools)+len(essentialToolNames))
 				for _, toolDef := range credentialFilteredTools {
 					if fn, ok := toolDef["function"].(map[string]interface{}); ok {
 						if name, ok := fn["name"].(string); ok {
 							// Include only: essential tools OR skill's required tools
-							if essentialTools[name] || skillToolSet[name] {
+							if essentialToolNames[name] || skillToolSet[name] {
 								filtered = append(filtered, toolDef)
 							}
 						}
 					}
 				}
 				log.Printf("🎯 [SKILL] Skill-driven tool selection: %d/%d tools (skill=%s, required=%v, essential=%d)",
-					len(filtered), len(credentialFilteredTools), activeSkill.Name, activeSkill.RequiredTools, len(essentialTools))
+					len(filtered), len(credentialFilteredTools), activeSkill.Name, activeSkill.RequiredTools, len(essentialToolNames))
 				tools = filtered
 				sendStatus("tools_ready", map[string]interface{}{
 					"count":  len(filtered),
@@ -1878,7 +1871,7 @@ func (s *ChatService) StreamChatCompletion(userConn *models.UserConnection) erro
 					"count":  len(credentialFilteredTools),
 					"method": "skill",
 				})
-			} else if s.toolPredictorService != nil && len(credentialFilteredTools) > 0 {
+			} else if s.toolPredictorService != nil && len(credentialFilteredTools) > 0 && policy.ToolStrategy != ToolsEssentialsOnly {
 				// No skill matched — predict CAPABILITY GROUPS (Phase 2), not
 				// individual tools. The predictor chooses among ~12 groups instead
 				// of ~192 tools (a coarse choice a small model gets right), then we
@@ -1916,6 +1909,21 @@ func (s *ChatService) StreamChatCompletion(userConn *models.UserConnection) erro
 						"method": "predicted_groups",
 					})
 				}
+			} else if policy.ToolStrategy == ToolsEssentialsOnly {
+				filtered := make([]map[string]interface{}, 0, len(essentialToolNames))
+				for _, toolDef := range credentialFilteredTools {
+					if fn, ok := toolDef["function"].(map[string]interface{}); ok {
+						if name, ok := fn["name"].(string); ok && essentialToolNames[name] {
+							filtered = append(filtered, toolDef)
+						}
+					}
+				}
+				tools = filtered
+				log.Printf("⚡ [LITE] Using %d essential tools (from %d available)", len(tools), len(credentialFilteredTools))
+				sendStatus("tools_ready", map[string]interface{}{
+					"count":  len(tools),
+					"method": "lite",
+				})
 			} else {
 				// No skill, no predictor — use all credential-filtered tools
 				log.Printf("📦 [REQUEST] No skill matched, no predictor, using all %d filtered tools", len(credentialFilteredTools))
@@ -2004,9 +2012,11 @@ func (s *ChatService) StreamChatCompletion(userConn *models.UserConnection) erro
 	systemPrompt := s.GetSystemPrompt(userConn, includeAskUser)
 
 	// SKILL PROMPT INJECTION — Prepend the skill's system prompt before the base system prompt
-	if activeSkill != nil && activeSkill.SystemPrompt != "" {
-		systemPrompt = activeSkill.SystemPrompt + "\n\n---\n\n" + systemPrompt
-		log.Printf("🎯 [SKILL] Injected skill system prompt for: %s (%d chars)", activeSkill.Name, len(activeSkill.SystemPrompt))
+	if !policy.SkipSkillPrompt {
+		if activeSkill != nil && activeSkill.SystemPrompt != "" {
+			systemPrompt = activeSkill.SystemPrompt + "\n\n---\n\n" + systemPrompt
+			log.Printf("🎯 [SKILL] Injected skill system prompt for: %s (%d chars)", activeSkill.Name, len(activeSkill.SystemPrompt))
+		}
 	}
 
 	// Inject available images context if there are images in this conversation
@@ -3508,6 +3518,12 @@ func (s *ChatService) buildMemoryContext(userConn *models.UserConnection) string
 		return ""
 	}
 
+	// Lite models skip memory entirely — the selection call blocks the turn for
+	// up to 3 seconds and small models make poor use of injected memories.
+	if s.turnPolicyFor(userConn.ModelID).SkipMemorySelection {
+		return ""
+	}
+
 	// Get recent messages from cache for context
 	messages := s.getConversationMessages(userConn.ConversationID)
 	if len(messages) == 0 {
@@ -3567,6 +3583,19 @@ func (s *ChatService) buildMemoryContext(userConn *models.UserConnection) string
 	return builder.String()
 }
 
+// turnPolicyFor loads the lite_mode flag for a model and resolves the policy.
+// Any lookup failure yields the zero policy, which is the full-featured path.
+func (s *ChatService) turnPolicyFor(modelID string) TurnPolicy {
+	if modelID == "" || s.db == nil {
+		return TurnPolicy{}
+	}
+	var lite bool
+	if err := s.db.QueryRow(`SELECT lite_mode FROM models WHERE id = ?`, modelID).Scan(&lite); err != nil {
+		return TurnPolicy{}
+	}
+	return resolveTurnPolicy(&models.Model{ID: modelID, LiteMode: lite})
+}
+
 // GetSystemPrompt returns the appropriate system prompt based on priority hierarchy
 // includeAskUser: whether to include ask_user tool instructions (should be true if tools are available)
 func (s *ChatService) GetSystemPrompt(userConn *models.UserConnection, includeAskUser bool) string {
@@ -3587,6 +3616,15 @@ func (s *ChatService) GetSystemPrompt(userConn *models.UserConnection, includeAs
 
 	// 🧠 Build memory context (injected memories from user's memory bank)
 	memoryContext := s.buildMemoryContext(userConn)
+
+	if s.turnPolicyFor(userConn.ModelID).LiteSystemPrompt {
+		liteAppendix := ""
+		if includeAskUser {
+			liteAppendix = getAskUserInstructions()
+		}
+		log.Printf("⚡ [LITE] Using compact system prompt for %s", userConn.ModelID)
+		return temporalContext + getLiteSystemPrompt() + liteAppendix
+	}
 
 	// Priority 1: User-provided system instructions (per-request override)
 	if userConn.SystemInstructions != "" {
@@ -4608,6 +4646,19 @@ func (s *ChatService) RunSubagent(ctx context.Context, params tools.SubagentPara
 	return tools.SubagentResult{
 		Summary: result.Response,
 	}, nil
+}
+
+// essentialToolNames are the core utilities that pass through any narrowing of
+// the tool set — skill-driven selection and the lite tool strategy alike.
+var essentialToolNames = map[string]bool{
+	"ask_user":         true, // Always allow asking user for clarification
+	"search_web":       true, // Web search for research
+	"search_images":    true, // Image search
+	"get_current_time": true, // Time utility
+	"calculate_math":   true, // Math utility
+	"scrape_web":       true, // Read web page content
+	"download_file":    true, // Download files from URLs
+	"describe_image":   true, // Understand uploaded images
 }
 
 var dataAnalysisGroupTools = map[string]bool{
