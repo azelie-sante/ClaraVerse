@@ -116,6 +116,10 @@ func (s *ModelManagementService) UpdateModel(ctx context.Context, modelID string
 		updateParts = append(updateParts, "smart_tool_router = ?")
 		args = append(args, *req.SmartToolRouter)
 	}
+	if req.LiteMode != nil {
+		updateParts = append(updateParts, "lite_mode = ?")
+		args = append(args, *req.LiteMode)
+	}
 	if req.FreeTier != nil {
 		updateParts = append(updateParts, "free_tier = ?")
 		args = append(args, *req.FreeTier)
@@ -1025,13 +1029,13 @@ func (s *ModelManagementService) GetModelByID(modelID string) (*models.Model, er
 	err := s.db.QueryRow(`
 		SELECT m.id, m.provider_id, p.name as provider_name, p.favicon as provider_favicon,
 		       m.name, m.display_name, m.description, m.context_length, m.supports_tools,
-		       m.supports_streaming, m.supports_vision, m.smart_tool_router, m.is_visible, m.system_prompt, m.fetched_at
+		       m.supports_streaming, m.supports_vision, m.smart_tool_router, m.lite_mode, m.is_visible, m.system_prompt, m.fetched_at
 		FROM models m
 		JOIN providers p ON m.provider_id = p.id
 		WHERE m.id = ?
 	`, modelID).Scan(&m.ID, &m.ProviderID, &m.ProviderName, &providerFavicon,
 		&m.Name, &displayName, &description, &contextLength, &m.SupportsTools,
-		&m.SupportsStreaming, &m.SupportsVision, &m.SmartToolRouter, &m.IsVisible, &systemPrompt, &fetchedAt)
+		&m.SupportsStreaming, &m.SupportsVision, &m.SmartToolRouter, &m.LiteMode, &m.IsVisible, &systemPrompt, &fetchedAt)
 
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("model not found: %s", modelID)
@@ -1117,6 +1121,7 @@ type UpdateModelRequest struct {
 	IsVisible         *bool
 	SystemPrompt      *string
 	SmartToolRouter   *bool
+	LiteMode          *bool
 	FreeTier          *bool
 }
 

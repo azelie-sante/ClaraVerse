@@ -34,7 +34,7 @@ func (s *ModelService) GetAll(visibleOnly bool) ([]models.Model, error) {
 	query := `
 		SELECT m.id, m.provider_id, p.name as provider_name, p.favicon as provider_favicon,
 		       m.name, m.display_name, m.description, m.context_length, m.supports_tools,
-		       m.supports_streaming, m.supports_vision, m.smart_tool_router, m.is_visible, m.system_prompt, m.fetched_at
+		       m.supports_streaming, m.supports_vision, m.smart_tool_router, m.lite_mode, m.is_visible, m.system_prompt, m.fetched_at
 		FROM models m
 		JOIN providers p ON m.provider_id = p.id
 		WHERE (p.audio_only = 0 OR p.audio_only IS NULL)
@@ -59,7 +59,7 @@ func (s *ModelService) GetAll(visibleOnly bool) ([]models.Model, error) {
 
 		err := rows.Scan(&m.ID, &m.ProviderID, &m.ProviderName, &providerFavicon,
 			&m.Name, &displayName, &description, &contextLength, &m.SupportsTools,
-			&m.SupportsStreaming, &m.SupportsVision, &m.SmartToolRouter, &m.IsVisible, &systemPrompt, &fetchedAt)
+			&m.SupportsStreaming, &m.SupportsVision, &m.SmartToolRouter, &m.LiteMode, &m.IsVisible, &systemPrompt, &fetchedAt)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan model: %w", err)
 		}
@@ -95,7 +95,7 @@ func (s *ModelService) GetByProvider(providerID int, visibleOnly bool) ([]models
 	query := `
 		SELECT m.id, m.provider_id, p.name as provider_name, p.favicon as provider_favicon,
 		       m.name, m.display_name, m.description, m.context_length, m.supports_tools,
-		       m.supports_streaming, m.supports_vision, m.smart_tool_router, m.is_visible, m.system_prompt, m.fetched_at
+		       m.supports_streaming, m.supports_vision, m.smart_tool_router, m.lite_mode, m.is_visible, m.system_prompt, m.fetched_at
 		FROM models m
 		JOIN providers p ON m.provider_id = p.id
 		WHERE m.provider_id = ?
@@ -120,7 +120,7 @@ func (s *ModelService) GetByProvider(providerID int, visibleOnly bool) ([]models
 
 		err := rows.Scan(&m.ID, &m.ProviderID, &m.ProviderName, &providerFavicon,
 			&m.Name, &displayName, &description, &contextLength, &m.SupportsTools,
-			&m.SupportsStreaming, &m.SupportsVision, &m.SmartToolRouter, &m.IsVisible, &systemPrompt, &fetchedAt)
+			&m.SupportsStreaming, &m.SupportsVision, &m.SmartToolRouter, &m.LiteMode, &m.IsVisible, &systemPrompt, &fetchedAt)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan model: %w", err)
 		}
@@ -157,7 +157,7 @@ func (s *ModelService) GetToolPredictorModels() ([]models.Model, error) {
 	query := `
 		SELECT m.id, m.provider_id, p.name as provider_name, p.favicon as provider_favicon,
 		       m.name, m.display_name, m.description, m.context_length, m.supports_tools,
-		       m.supports_streaming, m.supports_vision, m.smart_tool_router, m.is_visible, m.system_prompt, m.fetched_at
+		       m.supports_streaming, m.supports_vision, m.smart_tool_router, m.lite_mode, m.is_visible, m.system_prompt, m.fetched_at
 		FROM models m
 		JOIN providers p ON m.provider_id = p.id
 		WHERE m.smart_tool_router = 1
@@ -181,7 +181,7 @@ func (s *ModelService) GetToolPredictorModels() ([]models.Model, error) {
 
 		err := rows.Scan(&m.ID, &m.ProviderID, &m.ProviderName, &providerFavicon,
 			&m.Name, &displayName, &description, &contextLength, &m.SupportsTools,
-			&m.SupportsStreaming, &m.SupportsVision, &m.SmartToolRouter, &m.IsVisible, &systemPrompt, &fetchedAt)
+			&m.SupportsStreaming, &m.SupportsVision, &m.SmartToolRouter, &m.LiteMode, &m.IsVisible, &systemPrompt, &fetchedAt)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan tool predictor model: %w", err)
 		}

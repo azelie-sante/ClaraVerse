@@ -133,6 +133,13 @@ func (h *ModelManagementHandler) UpdateModel(c *fiber.Ctx) error {
 			}
 		}
 
+		if val, exists := rawBody["lite_mode"]; exists {
+			if boolVal, ok := val.(bool); ok {
+				req.LiteMode = &boolVal
+				log.Printf("[DEBUG] Manually parsed lite_mode: %v", boolVal)
+			}
+		}
+
 		if val, exists := rawBody["supports_tools"]; exists {
 			if boolVal, ok := val.(bool); ok {
 				req.SupportsTools = &boolVal
