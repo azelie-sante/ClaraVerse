@@ -41,7 +41,8 @@ A lite turn differs from a normal turn in exactly four ways.
 | Skill system prompt injection | injected when a skill matches | **skipped** |
 | Tool set when no skill matches | tool-predictor LLM call, or the full payload when no predictor is configured | **the 8 essential tools, no extra call** |
 | Memory selection | blocking, ≤3s, ~1–2k tokens | **skipped** |
-| Base system prompt | ~187 tokens, plus an always-appended appendix: markdown formatting guidelines ~329 tokens, and ask_user instructions ~527 tokens when tools are offered | **~200-token variant** |
+| Base system prompt | ~187 tokens | **~96-token variant** |
+| Prompt appendix | formatting guidelines ~329 tokens, plus ask_user instructions ~527 tokens when tools are offered | **formatting guidelines dropped; ask_user instructions kept** |
 
 Streaming, the tool loop, tool execution, title generation and post-stream
 context summarisation are untouched.
