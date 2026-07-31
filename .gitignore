@@ -76,3 +76,6 @@ backend/mcp-bridge/bin/mcp-client*
 backend/mcp-bridge/clara_companion
 backend/providerss.json
 *.test
+
+# Subagent-driven development scratch (ledger, briefs, review packages)
+.superpowers/
