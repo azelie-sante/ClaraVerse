@@ -505,16 +505,24 @@ This removes both the blocking call and the ~1–2k tokens it would have injecte
 
 - [ ] **Step 6: Use the lite system prompt**
 
-In `GetSystemPrompt` at line 3572, before the Priority 2 model-specific lookup at line 3599, add:
+`GetSystemPrompt` builds `appendix` at lines 3573-3583 as `getAskUserInstructions() + getMarkdownFormattingGuidelines()` when `includeAskUser` is true, and just the formatting guidelines otherwise. Measured sizes: formatting guidelines 1,315 chars (~329 tokens), ask_user instructions 2,109 chars (~527 tokens).
+
+A lite turn drops the **formatting guidelines** — markdown conventions are what small models ignore or echo back verbatim — but keeps the **ask_user instructions** when tools are offered, because `ask_user` is in the lite essential tool set and is useless without them.
+
+In `GetSystemPrompt`, after `temporalContext` is built (line 3586) and before the Priority 1 `SystemInstructions` check at line 3591, add:
 
 ```go
 	if s.turnPolicyFor(userConn.ModelID).LiteSystemPrompt {
+		liteAppendix := ""
+		if includeAskUser {
+			liteAppendix = getAskUserInstructions()
+		}
 		log.Printf("⚡ [LITE] Using compact system prompt for %s", userConn.ModelID)
-		return temporalContext + getLiteSystemPrompt() + appendix
+		return temporalContext + getLiteSystemPrompt() + liteAppendix
 	}
 ```
 
-Note this deliberately omits `memoryContext`, which is empty in lite mode anyway.
+This deliberately omits `memoryContext`, which is empty in lite mode anyway, and it must sit **before** the Priority 1 check so a lite model is not handed the full prompt stack via another path.
 
 - [ ] **Step 7: Verify the build and the full service test suite**
 

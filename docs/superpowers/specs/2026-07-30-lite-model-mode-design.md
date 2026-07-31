@@ -7,7 +7,7 @@ Before the first token streams, the backend can spend:
 
 | Item | Cost |
 | --- | --- |
-| Base system prompt | ~1,420 tokens |
+| Base system prompt | ~187 tokens, plus an always-appended appendix: markdown formatting guidelines ~329 tokens, and ask_user instructions ~527 tokens when tools are offered |
 | Tool payload (no skill matched, no predictor) | 15,000–20,000 tokens |
 | Tool prediction | an extra LLM round-trip, which itself ships the full tool list plus 6 messages of history |
 | Memory selection | a blocking call with a 3-second timeout, plus ~1–2k tokens |
@@ -41,7 +41,7 @@ A lite turn differs from a normal turn in exactly four ways.
 | Skill system prompt injection | injected when a skill matches | **skipped** |
 | Tool set when no skill matches | tool-predictor LLM call, or the full payload when no predictor is configured | **the 8 essential tools, no extra call** |
 | Memory selection | blocking, ≤3s, ~1–2k tokens | **skipped** |
-| Base system prompt | ~1,420 tokens | **~200-token variant** |
+| Base system prompt | ~187 tokens, plus an always-appended appendix: markdown formatting guidelines ~329 tokens, and ask_user instructions ~527 tokens when tools are offered | **~200-token variant** |
 
 Streaming, the tool loop, tool execution, title generation and post-stream
 context summarisation are untouched.
@@ -57,7 +57,8 @@ The 8 essential tools are the set already defined in `chat_service.go`:
 `scrape_web`, `download_file`, `describe_image`.
 
 Expected result per turn: one inference instead of two, and a prompt of roughly
-200 tokens plus a small tool set instead of a variable payload up to 20k.
+96 tokens (623 with the ask_user instructions) plus a small tool set, instead of
+a variable payload up to 20k on top of a ~1,043-token assembled prompt.
 
 ## Storage
 
@@ -124,7 +125,11 @@ All in `internal/services/chat_service.go`, inside `StreamChatCompletion`:
    `memorySelectionService.SelectRelevantMemories` call and its 3-second
    context entirely.
 4. **System prompt.** When `LiteSystemPrompt`, `GetSystemPrompt` returns the
-   short variant.
+   short variant plus the ask_user instructions when tools are offered. The
+   markdown formatting guidelines are dropped: they are the conventions small
+   models ignore or echo back verbatim. The ask_user instructions are kept
+   because `ask_user` is in the lite essential tool set and is useless without
+   them.
 
 The lite system prompt is a new constant beside `getDefaultSystemPrompt()`. It
 states the assistant's identity, that it may call the tools it is given, and
