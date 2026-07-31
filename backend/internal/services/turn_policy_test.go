@@ -62,3 +62,20 @@ func TestLitePolicyNeverUsesFullTools(t *testing.T) {
 		t.Error("lite policy must not use ToolsFull — this is the regression that looks like nothing but unexplained slowness")
 	}
 }
+
+func TestLiteSystemPromptIsShort(t *testing.T) {
+	lite := getLiteSystemPrompt()
+	full := getDefaultSystemPrompt()
+
+	if lite == "" {
+		t.Fatal("lite system prompt must not be empty")
+	}
+	// The whole point is a small prompt. ~4 chars per token, so 1200 chars is
+	// roughly 300 tokens — a generous ceiling for a ~200 token target.
+	if len(lite) > 1200 {
+		t.Errorf("lite prompt is %d chars, want <= 1200", len(lite))
+	}
+	if len(lite) >= len(full) {
+		t.Errorf("lite prompt (%d chars) must be shorter than the default (%d chars)", len(lite), len(full))
+	}
+}

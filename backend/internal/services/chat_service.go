@@ -3637,6 +3637,21 @@ func (s *ChatService) GetSystemPrompt(userConn *models.UserConnection, includeAs
 	return temporalContext + defaultPrompt + memoryContext + appendix
 }
 
+// getLiteSystemPrompt returns the compact prompt used for models flagged
+// lite_mode. It states identity and the tool contract and stops there: the
+// artifact conventions, formatting rules and extended tool guidance in the
+// default prompt are routinely ignored or echoed back verbatim by small
+// models, so including them costs tokens and buys nothing.
+func getLiteSystemPrompt() string {
+	return `You are Clara, a helpful AI assistant.
+
+Answer directly and concisely. Prefer a short, correct answer over a long one.
+
+You may be given tools. Call a tool only when you cannot answer without it, and use the exact tool name and argument names supplied. If no tool fits, answer from your own knowledge.
+
+If a request is ambiguous, ask one short clarifying question instead of guessing.`
+}
+
 // getDefaultSystemPrompt returns the ClaraVerse-specific system prompt
 // Minimal prompt - models can see tool definitions directly in the API call
 func getDefaultSystemPrompt() string {
