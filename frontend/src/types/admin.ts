@@ -158,6 +158,7 @@ export interface UpdateModelRequest {
   is_visible?: boolean;
   system_prompt?: string;
   smart_tool_router?: boolean;
+  lite_mode?: boolean;
   free_tier?: boolean;
 }
 

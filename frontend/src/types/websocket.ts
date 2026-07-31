@@ -17,6 +17,7 @@ export interface Model {
   provider_secure?: boolean; // Indicates if provider doesn't store user data
   is_visible: boolean;
   smart_tool_router?: boolean; // If true, model can be used as tool predictor
+  lite_mode?: boolean; // If true, model skips memory, skill prompts and tool prediction
   fetched_at?: string;
   recommendation_tier?: {
     tier: 'tier1' | 'tier2' | 'tier3' | 'tier4' | 'tier5';

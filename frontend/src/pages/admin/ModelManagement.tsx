@@ -822,6 +822,14 @@ const ModelRow = ({
                 Smart Router
               </span>
             )}
+            {model.lite_mode && (
+              <span
+                className="px-2 py-1 bg-[var(--color-warning-light)] text-[var(--color-warning)] text-xs rounded"
+                title="Skips memory, skill prompts and tool prediction. Best for small local models."
+              >
+                Lite
+              </span>
+            )}
           </div>
         </td>
         <td className="p-4">
@@ -984,6 +992,13 @@ const ModelRow = ({
                     enabled={model.smart_tool_router || false}
                     onToggle={() => onUpdate({ smart_tool_router: !model.smart_tool_router })}
                   />
+                  <CapabilityToggle
+                    icon={<Zap size={16} />}
+                    label="Lite"
+                    enabled={model.lite_mode || false}
+                    onToggle={() => onUpdate({ lite_mode: !model.lite_mode })}
+                    title="Skips memory, skill prompts and tool prediction. Best for small local models."
+                  />
                 </div>
               </div>
 
@@ -1120,14 +1135,17 @@ const CapabilityToggle = ({
   label,
   enabled,
   onToggle,
+  title,
 }: {
   icon: React.ReactNode;
   label: string;
   enabled: boolean;
   onToggle: () => void;
+  title?: string;
 }) => (
   <button
     onClick={onToggle}
+    title={title}
     className="flex items-center gap-2 px-3 py-2 bg-[var(--color-surface)] rounded border border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] transition-colors cursor-pointer"
   >
     <div className={enabled ? 'text-[var(--color-success)]' : 'text-[var(--color-text-tertiary)]'}>
