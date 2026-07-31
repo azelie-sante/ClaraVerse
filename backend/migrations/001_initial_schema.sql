@@ -84,7 +84,7 @@ CREATE TABLE model_aliases (
     description TEXT COMMENT 'Model description',
     supports_vision BOOLEAN COMMENT 'Vision support override',
     agents_enabled BOOLEAN DEFAULT FALSE COMMENT 'Available in agent builder',
-    lite_mode BOOLEAN DEFAULT FALSE COMMENT 'Skip memory, skill prompts and tool prediction for speed',
+    lite_mode BOOLEAN DEFAULT FALSE COMMENT 'Reserved: not yet read. Lite mode is resolved from the models table only',
     smart_tool_router BOOLEAN DEFAULT FALSE COMMENT 'Can be used as tool predictor',
     free_tier BOOLEAN DEFAULT FALSE COMMENT 'Available on free tier',
     structured_output_support ENUM('excellent', 'good', 'fair', 'poor', 'unknown') COMMENT 'Structured output quality',

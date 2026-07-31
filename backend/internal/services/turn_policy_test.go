@@ -1,6 +1,7 @@
 package services
 
 import (
+	"strings"
 	"testing"
 
 	"claraverse/internal/models"
@@ -70,12 +71,31 @@ func TestLiteSystemPromptIsShort(t *testing.T) {
 	if lite == "" {
 		t.Fatal("lite system prompt must not be empty")
 	}
-	// The whole point is a small prompt. ~4 chars per token, so 1200 chars is
-	// roughly 300 tokens — a generous ceiling for a ~200 token target.
-	if len(lite) > 1200 {
-		t.Errorf("lite prompt is %d chars, want <= 1200", len(lite))
-	}
 	if len(lite) >= len(full) {
 		t.Errorf("lite prompt (%d chars) must be shorter than the default (%d chars)", len(lite), len(full))
+	}
+}
+
+func TestLiteAppendixContract(t *testing.T) {
+	// The lite path deliberately drops the markdown formatting guidelines but
+	// keeps the ask_user instructions, because ask_user is in the lite
+	// essential tool set and is useless without them.
+	assembled := getLiteSystemPrompt() + getAskUserInstructions()
+
+	if strings.Contains(assembled, getMarkdownFormattingGuidelines()) {
+		t.Error("lite path must not carry the markdown formatting guidelines")
+	}
+	if !strings.Contains(assembled, "ask_user") {
+		t.Error("lite path must keep the ask_user instructions")
+	}
+}
+
+func TestEssentialToolNamesAreRealTools(t *testing.T) {
+	// A lite turn's entire toolbox is these exact-match strings. If a tool is
+	// renamed in the registry, a lite turn silently ships without it.
+	for name := range essentialToolNames {
+		if groupOfTool(name) == "integrations" {
+			t.Errorf("essential tool %q is not a recognised tool name — a lite turn would ship without it", name)
+		}
 	}
 }

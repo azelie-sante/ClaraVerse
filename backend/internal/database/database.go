@@ -288,7 +288,7 @@ func (db *DB) runMigrations() error {
 	if exists, _ := tableExists("model_aliases"); exists {
 		if colExists, _ := columnExists("model_aliases", "lite_mode"); !colExists {
 			log.Println("📦 Running migration: Adding lite_mode to model_aliases table")
-			if _, err := db.Exec("ALTER TABLE model_aliases ADD COLUMN lite_mode BOOLEAN DEFAULT FALSE COMMENT 'Skip memory, skill prompts and tool prediction for speed'"); err != nil {
+			if _, err := db.Exec("ALTER TABLE model_aliases ADD COLUMN lite_mode BOOLEAN DEFAULT FALSE COMMENT 'Reserved: not yet read. Lite mode is resolved from the models table only'"); err != nil {
 				return fmt.Errorf("failed to add lite_mode to model_aliases: %w", err)
 			}
 			log.Println("✅ Migration completed: model_aliases.lite_mode added")

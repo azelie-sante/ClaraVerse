@@ -1707,6 +1707,9 @@ func (s *ChatService) StreamChatCompletion(userConn *models.UserConnection) erro
 	messages := s.getConversationMessages(userConn.ConversationID)
 
 	// 🖼️ Auto-switch to vision model if images are present but current model doesn't support vision
+	// TODO: the turn policy above is resolved from userConn.ModelID and is not
+	// re-resolved after this switch, so a lite-flagged model that auto-switches
+	// to a vision-capable model still runs under the lite policy.
 	if s.hasImageAttachments(messages) && !s.modelSupportsVision(userConn.ModelID) {
 		log.Printf("🖼️ [VISION] Images detected but model '%s' doesn't support vision - finding fallback", userConn.ModelID)
 
@@ -1943,6 +1946,10 @@ func (s *ChatService) StreamChatCompletion(userConn *models.UserConnection) erro
 				}
 			}
 			tools = unionToolsByName(tools, credentialFilteredTools, alwaysOnCoreTools)
+
+			if policy.ToolStrategy == ToolsEssentialsOnly {
+				log.Printf("⚡ [LITE] Final tool count for this turn: %d", len(tools))
+			}
 		}
 
 		// ─── RAG: per-turn search_knowledge injection ─────────────
@@ -3618,12 +3625,16 @@ func (s *ChatService) GetSystemPrompt(userConn *models.UserConnection, includeAs
 	memoryContext := s.buildMemoryContext(userConn)
 
 	if s.turnPolicyFor(userConn.ModelID).LiteSystemPrompt {
+		base := getLiteSystemPrompt()
+		if userConn.SystemInstructions != "" {
+			base = userConn.SystemInstructions
+		}
 		liteAppendix := ""
 		if includeAskUser {
 			liteAppendix = getAskUserInstructions()
 		}
 		log.Printf("⚡ [LITE] Using compact system prompt for %s", userConn.ModelID)
-		return temporalContext + getLiteSystemPrompt() + liteAppendix
+		return temporalContext + base + liteAppendix
 	}
 
 	// Priority 1: User-provided system instructions (per-request override)
@@ -3681,7 +3692,7 @@ func (s *ChatService) GetSystemPrompt(userConn *models.UserConnection, includeAs
 // default prompt are routinely ignored or echoed back verbatim by small
 // models, so including them costs tokens and buys nothing.
 func getLiteSystemPrompt() string {
-	return `You are Clara, a helpful AI assistant.
+	return `You are ClaraVerse, a helpful AI assistant.
 
 Answer directly and concisely. Prefer a short, correct answer over a long one.
 
