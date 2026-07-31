@@ -17,6 +17,7 @@ type Model struct {
 	SupportsVision    bool      `json:"supports_vision"`
 	SmartToolRouter   bool      `json:"smart_tool_router"`         // If true, model can be used as tool predictor
 	AgentsEnabled     bool      `json:"agents_enabled"`            // If true, model is available in agent builder
+	LiteMode          bool      `json:"lite_mode"`                 // If true, chat turns skip memory, skill prompts and the tool predictor
 	IsVisible         bool      `json:"is_visible"`
 	SystemPrompt      string    `json:"system_prompt,omitempty"`
 	FetchedAt         time.Time `json:"fetched_at"`
