@@ -49,6 +49,7 @@ type ChatService struct {
 	toolPredictorService    *ToolPredictorService     // Tool predictor for dynamic tool selection
 	memoryExtractionService *MemoryExtractionService  // Memory extraction service for extracting memories from chats
 	memorySelectionService  *MemorySelectionService   // Memory selection service for selecting relevant memories
+	hindsightClient         *HindsightClient          // Optional: when set, replaces native extraction+selection for this turn (see hindsight_client.go)
 	userService             *UserService              // User service for getting user preferences
 	settingsService         *SettingsService          // Settings service for system-wide model assignments
 	healthService           *health.Service           // Health service for provider health tracking
@@ -246,6 +247,16 @@ func (s *ChatService) SetMemoryExtractionService(memoryExtraction *MemoryExtract
 func (s *ChatService) SetMemorySelectionService(memorySelection *MemorySelectionService) {
 	s.memorySelectionService = memorySelection
 	log.Println("✅ [CHAT-SERVICE] Memory selection service set for memory injection")
+}
+
+// SetHindsightClient wires an evaluated alternative to the native memory
+// pipeline (see hindsight_client.go). When set, both extraction
+// (checkAndTriggerMemoryExtraction) and selection (buildMemoryContext) use
+// Hindsight exclusively instead of the native path for that turn — the two
+// aren't run side by side, to avoid double LLM calls and duplicate memories.
+func (s *ChatService) SetHindsightClient(client *HindsightClient) {
+	s.hindsightClient = client
+	log.Println("✅ [CHAT-SERVICE] Hindsight memory client set — replacing native extraction+selection")
 }
 
 // SetHealthService sets the health service for provider health tracking
@@ -1060,6 +1071,30 @@ func (s *ChatService) checkAndTriggerMemoryExtraction(userConn *models.UserConne
 			startIndex = 0
 		}
 		recentMessages := messages[startIndex:]
+
+		if s.hindsightClient != nil {
+			// Hindsight does its own fact/entity extraction server-side from
+			// raw text — no local job queue or extractor-model pool needed.
+			// Fire-and-forget: retain() took several seconds against a local
+			// model in testing, same order of magnitude as the native
+			// pipeline's background worker, so this must not block the turn.
+			go func(userID string, msgs []map[string]interface{}) {
+				defer func() {
+					if r := recover(); r != nil {
+						log.Printf("⚠️ [MEMORY-HINDSIGHT] Recovered from panic during retain: %v", r)
+					}
+				}()
+				blob := buildQueryTextFromMessages(msgs)
+				ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+				defer cancel()
+				if err := s.hindsightClient.Retain(ctx, userID, blob, "chat"); err != nil {
+					log.Printf("⚠️ [MEMORY-HINDSIGHT] Retain failed: %v", err)
+				} else {
+					log.Printf("✅ [MEMORY-HINDSIGHT] Retained %d messages for user %s", len(msgs), userID)
+				}
+			}(userConn.UserID, recentMessages)
+			return
+		}
 
 		// Enqueue extraction job (non-blocking)
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -3518,30 +3553,75 @@ func (s *ChatService) buildTemporalContext(userID string) string {
 	return context
 }
 
-// buildMemoryContext selects and formats relevant memories for injection
+// buildMemoryContext selects and formats relevant memories for injection.
+//
+// Two independent tiers get concatenated (MemGPT/Letta-style layering):
+//   - Pinned ("core"): models.Memory.Pinned facts, fetched unconditionally
+//     by a plain filter query (no embedding/LLM call) — so it runs even
+//     when every gate below would otherwise skip memory entirely (lite
+//     mode, no history yet, a simple greeting). The whole point of pinning
+//     is "don't rely on this turn's relevance search to surface it."
+//   - Relevance-based ("recall"): the pre-existing behavior, gated as
+//     before — embedding/LLM search scoped to what's relevant to THIS turn.
+//
+// Native only for now — Hindsight has its own fact-typing model (world/
+// experience/mental-model) rather than a pinned flag, so its recall() path
+// is unaffected by this tier.
 func (s *ChatService) buildMemoryContext(userConn *models.UserConnection) string {
-	// Check if memory selection service is available
-	if s.memorySelectionService == nil {
+	if s.hindsightClient == nil && s.memorySelectionService == nil {
 		return ""
 	}
 
-	// Lite models skip memory entirely — the selection call blocks the turn for
-	// up to 3 seconds and small models make poor use of injected memories.
-	if s.turnPolicyFor(userConn.ModelID).SkipMemorySelection {
-		return ""
+	pinnedContext := ""
+	if s.hindsightClient == nil {
+		pinnedContext = s.buildPinnedMemoryContext(userConn.UserID)
+	}
+
+	// Lite models skip the LLM-based memory selector — without a fast vector
+	// path, that call blocks the turn for up to 3 seconds. But when an
+	// embedding service is wired (see embedding_service.go), selection is a
+	// local cosine-similarity search, not an LLM call, so there's no latency
+	// reason to skip it — a lite-mode model was flagged for turn-latency
+	// reasons, not necessarily because it can't make use of memory context.
+	// Hindsight's recall() is likewise not an LLM call (hybrid search +
+	// cross-encoder rerank, both local), so it's never skipped for lite models.
+	if s.hindsightClient == nil && s.turnPolicyFor(userConn.ModelID).SkipMemorySelection && !s.memorySelectionService.HasEmbedding(context.Background()) {
+		return pinnedContext
 	}
 
 	// Get recent messages from cache for context
 	messages := s.getConversationMessages(userConn.ConversationID)
 	if len(messages) == 0 {
-		return "" // No conversation history yet
+		return pinnedContext // No conversation history yet for relevance search
 	}
 
-	// 🎯 OPTIMIZATION: Skip memory injection for simple greetings (saves tokens)
+	// 🎯 OPTIMIZATION: Skip relevance-based injection for simple greetings
+	// (saves tokens) — pinned facts still apply, a greeting doesn't gate those.
 	lastUserMessage := extractLastUserMessage(messages)
 	if isSimpleGreeting(lastUserMessage) {
-		log.Printf("👋 [MEMORY-OPTIMIZATION] Simple greeting detected - skipping memory injection to save tokens")
-		return ""
+		log.Printf("👋 [MEMORY-OPTIMIZATION] Simple greeting detected - skipping relevance-based injection to save tokens")
+		return pinnedContext
+	}
+
+	if s.hindsightClient != nil {
+		queryText := buildQueryTextFromMessages(messages)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		hits, err := s.hindsightClient.Recall(ctx, userConn.UserID, queryText, 2)
+		if err != nil {
+			log.Printf("⚠️ [MEMORY-HINDSIGHT] Recall failed: %v", err)
+			return ""
+		}
+		if len(hits) == 0 {
+			return ""
+		}
+		var b strings.Builder
+		b.WriteString("\n\n## Relevant Context from Previous Conversations\n\n")
+		for i, m := range hits {
+			b.WriteString(fmt.Sprintf("%d. %s\n", i+1, m.Text))
+		}
+		log.Printf("🧠 [MEMORY-HINDSIGHT] Injected %d memories into system prompt for user %s", len(hits), userConn.UserID)
+		return b.String()
 	}
 
 	// Limit to last 10 messages for context
@@ -3567,11 +3647,11 @@ func (s *ChatService) buildMemoryContext(userConn *models.UserConnection) string
 
 	if err != nil {
 		log.Printf("⚠️ [MEMORY] Failed to select memories: %v", err)
-		return ""
+		return pinnedContext
 	}
 
 	if len(selectedMemories) == 0 {
-		return "" // No relevant memories
+		return pinnedContext // No relevant memories beyond what's pinned
 	}
 
 	// Build memory context string
@@ -3587,7 +3667,33 @@ func (s *ChatService) buildMemoryContext(userConn *models.UserConnection) string
 
 	log.Printf("🧠 [MEMORY] Injected %d memories into system prompt for user %s", len(selectedMemories), userConn.UserID)
 
-	return builder.String()
+	return pinnedContext + builder.String()
+}
+
+// buildPinnedMemoryContext formats the always-inject core-memory tier. See
+// buildMemoryContext's doc comment for the layering rationale.
+func (s *ChatService) buildPinnedMemoryContext(userID string) string {
+	storage := s.memoryStorageServiceFromExtraction()
+	if storage == nil {
+		return ""
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	pinned, err := storage.GetPinnedMemories(ctx, userID)
+	if err != nil {
+		log.Printf("⚠️ [MEMORY] Failed to fetch pinned memories: %v", err)
+		return ""
+	}
+	if len(pinned) == 0 {
+		return ""
+	}
+	var b strings.Builder
+	b.WriteString("\n\n## Always Remember About This User\n\n")
+	for i, mem := range pinned {
+		b.WriteString(fmt.Sprintf("%d. %s\n", i+1, mem.DecryptedContent))
+	}
+	log.Printf("📌 [MEMORY] Injected %d pinned memories into system prompt for user %s", len(pinned), userID)
+	return b.String()
 }
 
 // turnPolicyFor loads the lite_mode flag for a model and resolves the policy.
@@ -3634,7 +3740,7 @@ func (s *ChatService) GetSystemPrompt(userConn *models.UserConnection, includeAs
 			liteAppendix = getAskUserInstructions()
 		}
 		log.Printf("⚡ [LITE] Using compact system prompt for %s", userConn.ModelID)
-		return temporalContext + base + liteAppendix
+		return temporalContext + base + memoryContext + liteAppendix
 	}
 
 	// Priority 1: User-provided system instructions (per-request override)
@@ -4512,12 +4618,12 @@ func isSimpleGreeting(message string) bool {
 // AddMemory satisfies tools.MemoryAccess — the contract the add_memory
 // built-in tool calls into when the model decides something is worth
 // remembering across conversations.
-func (s *ChatService) AddMemory(ctx context.Context, userID, content, category, conversationID string, tags []string) (string, error) {
+func (s *ChatService) AddMemory(ctx context.Context, userID, content, category, conversationID string, tags []string, pinned bool) (string, error) {
 	storage := s.memoryStorageServiceFromExtraction()
 	if storage == nil {
 		return "", fmt.Errorf("memory storage not available")
 	}
-	mem, err := storage.CreateMemory(ctx, userID, content, category, tags, 0.5, conversationID)
+	mem, err := storage.CreateMemory(ctx, userID, content, category, tags, pinned, 0.5, conversationID)
 	if err != nil {
 		return "", err
 	}

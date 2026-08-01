@@ -20,7 +20,7 @@ const MemoryAccessKey = "__memory_access__"
 // providing only the minimum surface (add/search) — no list/delete from the
 // model. Deletion stays a user-only action via Settings.
 type MemoryAccess interface {
-	AddMemory(ctx context.Context, userID, content, category, conversationID string, tags []string) (string, error) // returns memory_id
+	AddMemory(ctx context.Context, userID, content, category, conversationID string, tags []string, pinned bool) (string, error) // returns memory_id
 	SearchMemory(ctx context.Context, userID, query string, limit int) ([]MemorySearchHit, error)
 }
 
@@ -77,6 +77,13 @@ The memory is stored encrypted and visible to the user in Settings → Memory.`,
 					"items":       map[string]interface{}{"type": "string"},
 					"description": "Optional searchable tags (e.g., ['coding', 'python']).",
 				},
+				"pinned": map[string]interface{}{
+					"type": "boolean",
+					"description": "True ONLY for facts that must never be missed even if a future " +
+						"conversation's topic doesn't obviously relate to them — allergies, medical " +
+						"conditions, hard constraints, how the user wants to be addressed. False (default) " +
+						"for regular preferences, hobbies, skills, and context. Most memories are not pinned.",
+				},
 			},
 		},
 		Execute: executeAddMemory,
@@ -117,8 +124,10 @@ func executeAddMemory(args map[string]interface{}) (string, error) {
 		}
 	}
 
-	log.Printf("🧠 [TOOL add_memory] user=%s category=%s content=%q", userID, category, truncate(content, 80))
-	id, err := access.AddMemory(context.Background(), userID, content, category, convID, tags)
+	pinned, _ := args["pinned"].(bool)
+
+	log.Printf("🧠 [TOOL add_memory] user=%s category=%s pinned=%v content=%q", userID, category, pinned, truncate(content, 80))
+	id, err := access.AddMemory(context.Background(), userID, content, category, convID, tags, pinned)
 	if err != nil {
 		return "", fmt.Errorf("add_memory failed: %w", err)
 	}

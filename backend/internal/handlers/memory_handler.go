@@ -153,6 +153,7 @@ type CreateMemoryRequest struct {
 	Content  string   `json:"content"`
 	Category string   `json:"category"`
 	Tags     []string `json:"tags"`
+	Pinned   bool     `json:"pinned"` // core-memory tier: always injected, never decayed — see models.Memory.Pinned
 }
 
 func (h *MemoryHandler) CreateMemory(c *fiber.Ctx) error {
@@ -235,6 +236,7 @@ func (h *MemoryHandler) CreateMemory(c *fiber.Ctx) error {
 		req.Content,
 		req.Category,
 		req.Tags,
+		req.Pinned,
 		0.5, // Default engagement for manual memories
 		"",  // No conversation ID for manual memories
 	)
@@ -263,6 +265,7 @@ type UpdateMemoryRequest struct {
 	Content  *string   `json:"content,omitempty"`
 	Category *string   `json:"category,omitempty"`
 	Tags     *[]string `json:"tags,omitempty"`
+	Pinned   *bool     `json:"pinned,omitempty"` // core-memory tier toggle — see models.Memory.Pinned
 }
 
 func (h *MemoryHandler) UpdateMemory(c *fiber.Ctx) error {
@@ -352,6 +355,11 @@ func (h *MemoryHandler) UpdateMemory(c *fiber.Ctx) error {
 		tags = sanitizedTags
 	}
 
+	pinned := existingMemory.Pinned
+	if req.Pinned != nil {
+		pinned = *req.Pinned
+	}
+
 	// SECURITY FIX: Use atomic update instead of delete-create to prevent race conditions
 	updatedMemory, err := h.memoryStorageService.UpdateMemoryInPlace(
 		ctx,
@@ -360,6 +368,7 @@ func (h *MemoryHandler) UpdateMemory(c *fiber.Ctx) error {
 		content,
 		category,
 		tags,
+		pinned,
 		existingMemory.SourceEngagement,
 		existingMemory.ConversationID,
 	)
@@ -554,6 +563,7 @@ func buildMemoryResponse(mem models.DecryptedMemory) fiber.Map {
 		"content":            mem.DecryptedContent,
 		"category":           mem.Category,
 		"tags":               mem.Tags,
+		"pinned":             mem.Pinned,
 		"score":              mem.Score,
 		"access_count":       mem.AccessCount,
 		"last_accessed_at":   mem.LastAccessedAt,

@@ -22,11 +22,16 @@ import (
 //
 // Provider selection (priority order, first that works wins):
 //
-//  1. EMBEDDING_PROVIDER_URL + EMBEDDING_PROVIDER_KEY env vars — explicit
+//  1. EMBEDDINGS_SERVICE_URL — the local FastEmbed sidecar already deployed
+//     for RAG (see rag/embeddings_client.go, same env var, same container).
+//     Free, local, no API key, no network egress — always preferred when
+//     present, since it's infrastructure we're already running.
+//
+//  2. EMBEDDING_PROVIDER_URL + EMBEDDING_PROVIDER_KEY env vars — explicit
 //     OpenAI-compatible /v1/embeddings endpoint. Use this if you have a
 //     dedicated embedding key (OpenAI, Together, Voyage, etc.).
 //
-//  2. Bedrock native invoke at bedrock-runtime.<region>.amazonaws.com/model/
+//  3. Bedrock native invoke at bedrock-runtime.<region>.amazonaws.com/model/
 //     amazon.titan-embed-text-v2:0/invoke, authenticated with the Bedrock
 //     provider row's bearer API key (the ABSK long-term key). Picked up
 //     from the providers table — looks for a row with name='Bedrock' or
@@ -43,8 +48,9 @@ type EmbeddingService struct {
 	httpClient      *http.Client
 
 	// Static config — never changes after init.
-	explicitURL string
-	explicitKey string
+	fastembedURL string
+	explicitURL  string
+	explicitKey  string
 
 	// Cached Bedrock provider creds (the bearer key + region URL). Resolved
 	// lazily so the service can boot before any provider exists.
@@ -57,14 +63,15 @@ type EmbeddingService struct {
 // NewEmbeddingService wires the service. providerService may be nil when
 // running in isolation (tests); in that case only EMBEDDING_PROVIDER_URL
 // path is usable.
-func NewEmbeddingService(providerService *ProviderService, explicitURL, explicitKey string) *EmbeddingService {
+func NewEmbeddingService(providerService *ProviderService, fastembedURL, explicitURL, explicitKey string) *EmbeddingService {
 	return &EmbeddingService{
 		providerService: providerService,
 		httpClient: &http.Client{
 			Timeout: 15 * time.Second,
 		},
-		explicitURL: strings.TrimRight(explicitURL, "/"),
-		explicitKey: explicitKey,
+		fastembedURL: strings.TrimRight(fastembedURL, "/"),
+		explicitURL:  strings.TrimRight(explicitURL, "/"),
+		explicitKey:  explicitKey,
 	}
 }
 
@@ -81,6 +88,14 @@ func (s *EmbeddingService) Embed(ctx context.Context, text string) ([]float32, e
 	}
 	if len(text) > 8000 {
 		text = text[:8000]
+	}
+
+	if s.fastembedURL != "" {
+		vec, err := s.embedFastEmbed(ctx, text)
+		if err == nil {
+			return vec, nil
+		}
+		log.Printf("⚠️ [EMBED] FastEmbed sidecar failed: %v — trying next provider", err)
 	}
 
 	if s.explicitURL != "" && s.explicitKey != "" {
@@ -118,6 +133,9 @@ func (s *EmbeddingService) EmbedBatch(ctx context.Context, texts []string) ([][]
 // Used by the memory selection service to decide whether to vector-search
 // vs fall back to the old LLM-only selector.
 func (s *EmbeddingService) Available(ctx context.Context) bool {
+	if s.fastembedURL != "" {
+		return true
+	}
 	if s.explicitURL != "" && s.explicitKey != "" {
 		return true
 	}
@@ -201,6 +219,42 @@ func (s *EmbeddingService) embedTitanV2(ctx context.Context, baseURL, apiKey, te
 		return nil, fmt.Errorf("titan returned empty embedding")
 	}
 	return parsed.Embedding, nil
+}
+
+// embedFastEmbed calls the local RAG embeddings sidecar's native /embed
+// endpoint (see rag/embeddings_client.go — same container, same wire
+// format). Response shape: {"dense": [{"values": [...]}], ...}; we only need
+// the dense vector for cosine similarity, ignoring the sparse/BM25 half.
+func (s *EmbeddingService) embedFastEmbed(ctx context.Context, text string) ([]float32, error) {
+	body, _ := json.Marshal(map[string]interface{}{
+		"texts": []string{text},
+	})
+	req, err := http.NewRequestWithContext(ctx, "POST", s.fastembedURL+"/embed", bytes.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		raw, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
+		return nil, fmt.Errorf("fastembed HTTP %d: %s", resp.StatusCode, string(raw))
+	}
+	var parsed struct {
+		Dense []struct {
+			Values []float32 `json:"values"`
+		} `json:"dense"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&parsed); err != nil {
+		return nil, fmt.Errorf("fastembed decode: %w", err)
+	}
+	if len(parsed.Dense) == 0 || len(parsed.Dense[0].Values) == 0 {
+		return nil, fmt.Errorf("fastembed empty embedding")
+	}
+	return parsed.Dense[0].Values, nil
 }
 
 // embedOpenAICompatible hits /v1/embeddings on whatever URL+key the operator

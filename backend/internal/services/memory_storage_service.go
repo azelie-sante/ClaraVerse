@@ -47,7 +47,7 @@ func (s *MemoryStorageService) SetEmbeddingService(emb *EmbeddingService) {
 }
 
 // CreateMemory creates a new memory with encryption and deduplication
-func (s *MemoryStorageService) CreateMemory(ctx context.Context, userID, content, category string, tags []string, sourceEngagement float64, conversationID string) (*models.Memory, error) {
+func (s *MemoryStorageService) CreateMemory(ctx context.Context, userID, content, category string, tags []string, pinned bool, sourceEngagement float64, conversationID string) (*models.Memory, error) {
 	if userID == "" {
 		return nil, fmt.Errorf("user ID is required")
 	}
@@ -102,6 +102,7 @@ func (s *MemoryStorageService) CreateMemory(ctx context.Context, userID, content
 		ContentHash:      contentHash,
 		Category:         category,
 		Tags:             tags,
+		Pinned:           pinned,
 		Score:            initialScore,
 		AccessCount:      0,
 		LastAccessedAt:   nil,
@@ -188,6 +189,7 @@ func (s *MemoryStorageService) UpdateMemoryInPlace(
 	content string,
 	category string,
 	tags []string,
+	pinned bool,
 	sourceEngagement float64,
 	conversationID string,
 ) (*models.Memory, error) {
@@ -217,6 +219,7 @@ func (s *MemoryStorageService) UpdateMemoryInPlace(
 			"contentHash":      contentHash,
 			"category":         category,
 			"tags":             tags,
+			"pinned":           pinned,
 			"sourceEngagement": sourceEngagement,
 			"conversationId":   conversationID,
 			"updatedAt":        now,
@@ -373,6 +376,47 @@ func (s *MemoryStorageService) GetActiveMemories(ctx context.Context, userID str
 
 	log.Printf("📚 [MEMORY-STORAGE] Retrieved %d active memories for user %s", len(decryptedMemories), userID)
 	return decryptedMemories, nil
+}
+
+// GetPinnedMemories fetches the user's "core memory" tier — always-inject
+// facts (models.Memory.Pinned) — a plain filtered query, no embedding or
+// LLM call, so callers can afford to run this unconditionally on every
+// turn regardless of lite_mode/greeting/history-length gates that apply to
+// the relevance-based tier. Small by design (pinning is meant to be rare —
+// see the PINNED rules in memory_extraction_service.go's system prompt),
+// so no pagination.
+func (s *MemoryStorageService) GetPinnedMemories(ctx context.Context, userID string) ([]models.DecryptedMemory, error) {
+	filter := bson.M{
+		"userId":     userID,
+		"isArchived": false,
+		"pinned":     true,
+	}
+
+	cursor, err := s.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find pinned memories: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	var memories []models.Memory
+	if err := cursor.All(ctx, &memories); err != nil {
+		return nil, fmt.Errorf("failed to decode pinned memories: %w", err)
+	}
+
+	decrypted := make([]models.DecryptedMemory, 0, len(memories))
+	for _, memory := range memories {
+		decryptedBytes, err := s.encryptionService.Decrypt(userID, memory.EncryptedContent)
+		if err != nil {
+			log.Printf("⚠️ [MEMORY-STORAGE] Failed to decrypt pinned memory %s: %v", memory.ID.Hex(), err)
+			continue
+		}
+		decrypted = append(decrypted, models.DecryptedMemory{
+			Memory:           memory,
+			DecryptedContent: string(decryptedBytes),
+		})
+	}
+
+	return decrypted, nil
 }
 
 // MemoryHit is a single result from SearchByEmbedding: the memory + its

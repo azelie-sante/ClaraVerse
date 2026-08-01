@@ -68,6 +68,17 @@ CATEGORIES:
 - "fact": Skills, knowledge, experiences
 - "instruction": Guidelines to follow
 
+PINNED (always-remember) — set pinned=true ONLY for facts where forgetting
+would be actively harmful or embarrassing if missed on some future turn,
+not just "nice to have":
+- Medical: allergies, medical conditions, medications
+- Hard constraints the user stated explicitly: "never do X", "always do Y"
+- Core identity they'll expect you to already know every time: their name,
+  how they want to be addressed
+Set pinned=false for everything else — regular preferences, hobbies,
+one-off context, skills. Most memories should be pinned=false; a
+conversation with no pinned=true facts at all is normal and expected.
+
 Return JSON with array of memories.`
 
 // memoryExtractionSchema defines structured output for memory extraction
@@ -95,8 +106,12 @@ var memoryExtractionSchema = map[string]interface{}{
 						},
 						"description": "Relevant tags for this memory",
 					},
+					"pinned": map[string]interface{}{
+						"type":        "boolean",
+						"description": "True only for facts that must always be remembered (allergies, hard constraints, identity) — see PINNED rules. False for everything else.",
+					},
 				},
-				"required":             []string{"content", "category", "tags"},
+				"required":             []string{"content", "category", "tags", "pinned"},
 				"additionalProperties": false,
 			},
 		},
@@ -320,6 +335,7 @@ func (s *MemoryExtractionService) processJob(ctx context.Context, job *models.Me
 			mem.Content,
 			mem.Category,
 			mem.Tags,
+			mem.Pinned,
 			engagement,
 			job.ConversationID,
 		)

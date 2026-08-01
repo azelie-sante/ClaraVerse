@@ -314,11 +314,13 @@ func TestExtractedMemoryStructure(t *testing.T) {
 			Content  string   `json:"content"`
 			Category string   `json:"category"`
 			Tags     []string `json:"tags"`
+			Pinned   bool     `json:"pinned"`
 		}{
 			{
 				Content:  "User prefers dark mode",
 				Category: "preferences",
 				Tags:     []string{"ui", "theme", "preferences"},
+				Pinned:   false,
 			},
 		},
 	}

@@ -84,10 +84,16 @@ func (s *MemoryDecayService) RunDecayJob(ctx context.Context) error {
 
 // RunDecayJobForUser runs decay job for a specific user
 func (s *MemoryDecayService) RunDecayJobForUser(ctx context.Context, userID string, config DecayConfig) (int, int, error) {
-	// Get all active memories for user
+	// Get all active memories for user. Pinned memories are excluded
+	// entirely — they're the "core memory" tier (models.Memory.Pinned):
+	// always injected regardless of relevance, so decaying/archiving them
+	// on the same recency+frequency+engagement curve as everything else
+	// would defeat the point (a safety-critical fact mentioned once and
+	// never revisited is exactly the case pinning exists for).
 	filter := bson.M{
 		"userId":     userID,
 		"isArchived": false,
+		"pinned":     bson.M{"$ne": true},
 	}
 
 	cursor, err := s.collection.Find(ctx, filter)

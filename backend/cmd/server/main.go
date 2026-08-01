@@ -417,18 +417,39 @@ func main() {
 			chatService.SetUserService(userService)
 			chatService.SetSettingsService(settingsService)
 
-			// Embedding service: wires Bedrock Titan v2 (or an explicit OpenAI-
-			// compatible /v1/embeddings provider via env) so the memory layer
-			// can do vector retrieval instead of LLM-only selection. Optional;
-			// memory works without it, just more expensive per turn.
+			// Embedding service: prefers the local FastEmbed RAG sidecar
+			// (EMBEDDINGS_SERVICE_URL, already deployed for Knowledge), else
+			// an explicit OpenAI-compatible /v1/embeddings provider, else
+			// Bedrock Titan v2. So the memory layer can do vector retrieval
+			// instead of LLM-only selection. Optional; memory works without
+			// it, just more expensive (and slower) per turn.
 			embeddingService := services.NewEmbeddingService(
 				providerService,
+				os.Getenv("EMBEDDINGS_SERVICE_URL"),
 				os.Getenv("EMBEDDING_PROVIDER_URL"),
 				os.Getenv("EMBEDDING_PROVIDER_KEY"),
 			)
 			memoryStorageService.SetEmbeddingService(embeddingService)
 			memorySelectionService.SetEmbeddingService(embeddingService)
 			log.Println("✅ Embedding service initialized (vector memory retrieval)")
+		}
+
+		// Hindsight (https://github.com/vectorize-io/hindsight): an evaluated,
+		// self-hosted alternative to the native extraction+selection pipeline
+		// above — see hindsight_client.go for why. Opt-in via HINDSIGHT_URL;
+		// unset means today's native behavior, unchanged. Health-checked at
+		// boot so a misconfigured URL degrades to "disabled" with a clear log
+		// line instead of every chat turn failing silently.
+		if hindsightURL := os.Getenv("HINDSIGHT_URL"); hindsightURL != "" {
+			hindsightClient := services.NewHindsightClient(hindsightURL)
+			healthCtx, healthCancel := context.WithTimeout(context.Background(), 5*time.Second)
+			if hindsightClient.Healthy(healthCtx) {
+				chatService.SetHindsightClient(hindsightClient)
+				log.Printf("✅ Hindsight memory backend active at %s (replaces native extraction+selection)", hindsightURL)
+			} else {
+				log.Printf("⚠️ HINDSIGHT_URL=%s set but unreachable — falling back to native memory pipeline", hindsightURL)
+			}
+			healthCancel()
 		}
 
 		memoryDecayService = services.NewMemoryDecayService(mongoDB)

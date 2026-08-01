@@ -20,6 +20,23 @@ type Memory struct {
 	Category string   `bson:"category" json:"category"`         // "personal_info", "preferences", "context", "fact", "instruction"
 	Tags     []string `bson:"tags,omitempty" json:"tags,omitempty"` // Searchable tags (e.g., "coding", "music", "work")
 
+	// Pinned is the "core memory" tier (MemGPT/Letta-style layering):
+	//   - Pinned=true  -> always injected into the system prompt, every
+	//     turn, regardless of query relevance. For facts that must never
+	//     be missed because they didn't happen to match this turn's
+	//     embedding search — allergies, hard constraints, identity. Not
+	//     subject to decay/archival (see memory_decay_service.go) and not
+	//     counted against the relevance-based injection budget.
+	//   - Pinned=false -> "recall" tier: surfaces only when
+	//     SelectRelevantMemories judges it relevant to the current turn
+	//     (the pre-existing behavior, unchanged).
+	//   Either way it's always reachable via the search_memory tool (the
+	//   "archival" tier is really just "no auto-injection", not a
+	//   separate store) — pinning only changes automatic behavior.
+	// Set by the extraction LLM's own judgment (memoryExtractionSchema) or
+	// manually via PUT /api/memories/:id.
+	Pinned bool `bson:"pinned" json:"pinned"`
+
 	// PageRank-like Scoring
 	Score          float64    `bson:"score" json:"score"`                                           // Current relevance score (0.0-1.0)
 	AccessCount    int64      `bson:"accessCount" json:"access_count"`                              // How many times memory was selected/used
@@ -110,6 +127,7 @@ type ExtractedMemoryFromLLM struct {
 		Content  string   `json:"content"`
 		Category string   `json:"category"`
 		Tags     []string `json:"tags"`
+		Pinned   bool     `json:"pinned"`
 	} `json:"memories"`
 }
 
