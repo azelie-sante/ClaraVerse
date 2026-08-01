@@ -348,8 +348,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
 
 [Back to Top](#your-private-ai-workspace)
 
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=claraverse-space/ClaraVerse&type=timeline&legend=bottom-right)](https://www.star-history.com/#claraverse-space/ClaraVerse&type=timeline&legend=bottom-right)
-
 </div>
