@@ -125,7 +125,7 @@ func (h *LocalAuthHandler) Register(c *fiber.Ctx) error {
 		SubscriptionStatus:  "active",
 		Preferences: models.UserPreferences{
 			StoreBuilderChatHistory: true,
-			MemoryEnabled:           false,
+			MemoryEnabled:           true,
 		},
 	}
 

@@ -67,6 +67,7 @@ func (h *UserHandler) GetPreferences(c *fiber.Ctx) error {
 		return c.JSON(models.UserPreferences{
 			StoreBuilderChatHistory: true,
 			DefaultModelID:          "",
+			MemoryEnabled:           true,
 		})
 	}
 
@@ -77,6 +78,7 @@ func (h *UserHandler) GetPreferences(c *fiber.Ctx) error {
 		return c.JSON(models.UserPreferences{
 			StoreBuilderChatHistory: true,
 			DefaultModelID:          "",
+			MemoryEnabled:           true,
 		})
 	}
 

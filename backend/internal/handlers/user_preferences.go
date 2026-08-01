@@ -45,6 +45,7 @@ func (h *UserPreferencesHandler) Get(c *fiber.Ctx) error {
 			ChatPrivacyMode:         "",
 			Theme:                   "dark",
 			FontSize:                "medium",
+			MemoryEnabled:           true,
 		})
 	}
 
