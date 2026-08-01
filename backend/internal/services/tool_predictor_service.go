@@ -276,6 +276,15 @@ Select the minimal set of tools needed. Return JSON with selected_tools and reas
 	maxAttempts := 2
 	var lastErr error
 	var predictedNames []string
+	// getNextHealthyRouter() falls back to "fastest candidate regardless of
+	// health" when every router is unhealthy (see its tail). In a single-
+	// router deployment (the common case for a self-hosted local model),
+	// attempt 1's failure marks that model unhealthy, so attempt 2's "pool"
+	// lookup finds nothing healthy and falls through to that same fallback —
+	// silently retrying the IDENTICAL model that just failed. That's a
+	// guaranteed-duplicate failure, not a real retry, so track what's
+	// already been tried this call and stop instead of repeating it.
+	attempted := make(map[string]bool, maxAttempts)
 
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
 		var provider *models.Provider
@@ -299,6 +308,14 @@ Select the minimal set of tools needed. Return JSON with selected_tools and reas
 			log.Printf("⚠️ [TOOL-PREDICTOR] Attempt %d: no router model available: %v", attempt, err)
 			break // no models at all
 		}
+
+		candidateKey := fmt.Sprintf("%d:%s", providerID, actualModel)
+		if attempted[candidateKey] {
+			log.Printf("⏭️ [TOOL-PREDICTOR] Attempt %d: %s (%s) already failed this call — no distinct candidate left, skipping retry instead of repeating a guaranteed failure",
+				attempt, actualModel, provider.Name)
+			break
+		}
+		attempted[candidateKey] = true
 
 		log.Printf("🤖 [TOOL-PREDICTOR] Attempt %d: using model %s (%s) from %s",
 			attempt, actualModel, provider.Name, provider.BaseURL)
