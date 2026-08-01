@@ -175,8 +175,24 @@ func NewAgentBlockExecutor(
 		providerService:   providerService,
 		toolRegistry:      toolRegistry,
 		credentialService: credentialService,
+		// 300s, not 120s: this executor's own tool loop appends each
+		// iteration's response + tool results to `messages` (see the
+		// `messages = append(...)` sites below), so the prompt strictly
+		// grows every round. Against a fast hosted API 120s is generous;
+		// against a slow/local provider (measured directly at ~7 tok/s
+		// prefill on this session's test model), a handful of tool-call
+		// rounds is enough to cross 120s on prompt processing alone,
+		// before generation even starts — deterministically, not as a
+		// transient blip, which is why the one built-in retry doesn't
+		// help (same oversized prompt, same result). This constant is
+		// unconditional (doesn't check lite_mode/provider speed) and this
+		// executor runs off the interactive hot path (workflow blocks and
+		// Crew's background worker both tolerate a slower failure far
+		// better than a fast wrong one), so there's no latency budget
+		// this is protecting — only room to actually finish before
+		// giving up.
 		httpClient: &http.Client{
-			Timeout: 120 * time.Second,
+			Timeout: 300 * time.Second,
 		},
 	}
 }
