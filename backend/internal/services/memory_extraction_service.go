@@ -237,11 +237,24 @@ func (s *MemoryExtractionService) ProcessPendingJobs(ctx context.Context) error 
 
 	log.Printf("⚙️ [MEMORY-EXTRACTION] Processing %d pending jobs", len(jobs))
 
-	// Process each job
+	// Process each job with its OWN context, not the caller's. The worker
+	// tick (cmd/server/main.go) hands this function a short-lived context
+	// sized for "check the queue," not "run every pending job's LLM call to
+	// completion" — sharing it across a whole batch meant the first job's
+	// slow attempt (or three, against a slow local model) silently starved
+	// every job after it AND the markJobFailed write itself (same expired
+	// context), which is why failed jobs were getting stuck at "processing"
+	// forever instead of transitioning to "failed": the failure was real,
+	// but recording it failed too, for the same reason.
 	for _, job := range jobs {
-		if err := s.processJob(ctx, &job); err != nil {
+		jobCtx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
+		err := s.processJob(jobCtx, &job)
+		cancel()
+		if err != nil {
 			log.Printf("⚠️ [MEMORY-EXTRACTION] Job %s failed: %v", job.ID.Hex(), err)
-			s.markJobFailed(ctx, job.ID, err.Error())
+			failCtx, failCancel := context.WithTimeout(context.Background(), 10*time.Second)
+			s.markJobFailed(failCtx, job.ID, err.Error())
+			failCancel()
 		}
 	}
 

@@ -60,6 +60,7 @@ func (s *UserService) SyncUserFromSupabase(ctx context.Context, supabaseUserID, 
 		"subscriptionStatus": models.SubStatusActive,
 		"preferences": models.UserPreferences{
 			StoreBuilderChatHistory: true, // Default to storing chat history
+			MemoryEnabled:           true,
 		},
 	}
 
@@ -97,9 +98,25 @@ func (s *UserService) SyncUserFromSupabase(ctx context.Context, supabaseUserID, 
 }
 
 // GetUserBySupabaseID retrieves a user by their Supabase user ID
+// GetUserBySupabaseID resolves a user by whatever ID the caller's session
+// actually carries. Despite the name, this is the general-purpose lookup
+// used across chat/memory/preferences — but "supabaseUserId" is a legacy
+// field (models/user.go) that local-JWT registration never sets (see
+// auth_local.go). Local auth's JWT `sub` claim is the Mongo _id hex string,
+// not a Supabase ID, so a plain supabaseUserId match always misses for
+// every local-auth user — this was silently breaking automatic memory
+// extraction (checkAndTriggerMemoryExtraction bails immediately on "user
+// not found", no fallback) and degrading several other callers to
+// default/fallback values. Try both identity shapes in one query so
+// existing Supabase-mode deployments are unaffected.
 func (s *UserService) GetUserBySupabaseID(ctx context.Context, supabaseUserID string) (*models.User, error) {
+	filters := []bson.M{{"supabaseUserId": supabaseUserID}}
+	if oid, err := primitive.ObjectIDFromHex(supabaseUserID); err == nil {
+		filters = append(filters, bson.M{"_id": oid})
+	}
+
 	var user models.User
-	err := s.collection.FindOne(ctx, bson.M{"supabaseUserId": supabaseUserID}).Decode(&user)
+	err := s.collection.FindOne(ctx, bson.M{"$or": filters}).Decode(&user)
 	if err == mongo.ErrNoDocuments {
 		return nil, fmt.Errorf("user not found")
 	}
