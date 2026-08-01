@@ -59,7 +59,7 @@ func (h *WorkflowTemplateHandler) Get(c *fiber.Ctx) error {
 // straight into the editor for the new workflow.
 func (h *WorkflowTemplateHandler) Clone(c *fiber.Ctx) error {
 	id := c.Params("id")
-	userID, ok := c.Locals("userID").(string)
+	userID, ok := c.Locals("user_id").(string)
 	if !ok || userID == "" {
 		return c.Status(401).JSON(fiber.Map{"error": "authentication required"})
 	}
