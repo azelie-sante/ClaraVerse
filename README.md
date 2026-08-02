@@ -13,16 +13,18 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/claraverseoss/claraverse?color=blue)](https://hub.docker.com/r/claraverseoss/claraverse)
 [![Discord](https://img.shields.io/badge/Discord-Join%20Us-7289da?logo=discord&logoColor=white)](https://discord.com/invite/j633fsrAne)
 
-[Website](https://claraverse.space) · [Documentation](#documentation) · [Quick Start](#quick-start) · [Community](#community) · [Contributing](#contributing)
+[Website](https://claraverse.space) · [Documentation](#documentation) · [Quick Start](#quick-start) · [vs Open WebUI](#claraverse-vs-open-webui) · [Community](#community) · [Contributing](#contributing)
 
 </p>
 </div>
 
 ## What is ClaraVerse?
 
-ClaraVerse is a private AI workspace that combines chat, visual workflows, long-running tasks, and Telegram integration in one app. Assign Clara research, coding, or automation tasks and track everything on a board. Use OpenAI, Claude, Gemini, or local models like Ollama — with browser-local storage that keeps your conversations private.
+ClaraVerse is a private AI workspace built around three things most AI chat UIs treat as an afterthought: agents that work as an actual team, memory that behaves like a real memory system instead of a flat list of notes, and a license that does not start charging you once people notice your project.
 
-If you have **Ollama** or **LM Studio** running on your machine, ClaraVerse detects them automatically and imports all your models — zero configuration.
+Chat, Crew (multi-agent teams with human review), a visual workflow builder, and Telegram integration all live in one app, on your own infrastructure. Use OpenAI, Claude, Gemini, or local models like Ollama and llama.cpp. Chats are stored locally on your device by default, with optional encrypted sync if you want them on more than one machine.
+
+If you have **Ollama** or **LM Studio** running on your machine, ClaraVerse detects them automatically and imports all your models. Zero configuration.
 
 ---
 
@@ -42,7 +44,7 @@ cd ClaraVerse
 docker compose -f docker-compose.production.yml up -d
 ```
 
-Open **http://localhost:3000** — register your account (first user becomes admin) and start chatting.
+Open **http://localhost:3000**, register your account (first user becomes admin), and start chatting.
 
 > **Have Ollama running?** ClaraVerse auto-detects it and imports all your models. No setup needed.
 > Make sure Ollama is listening on `0.0.0.0` (set `OLLAMA_HOST=0.0.0.0` in your Ollama config).
@@ -60,7 +62,7 @@ docker run -d \
   ghcr.io/claraverse-space/claraverse:latest
 ```
 
-This runs ClaraVerse with a single container. For the full stack with MySQL, MongoDB, Redis, SearXNG, **Qdrant + the embeddings sidecar (required for Knowledge bases / RAG)**, use the Docker Compose setup above — single-container mode boots fine but the Knowledge tab and `search_knowledge` tool need the sidecars and will surface "embeddings service unreachable" without them.
+This runs ClaraVerse with a single container. For the full stack with MySQL, MongoDB, Redis, SearXNG, **Qdrant and the embeddings sidecar (required for Knowledge bases / RAG)**, use the Docker Compose setup above. Single-container mode boots fine, but the Knowledge tab and `search_knowledge` tool need the sidecars and will surface "embeddings service unreachable" without them.
 
 </details>
 
@@ -97,7 +99,7 @@ ClaraVerse automatically discovers local AI providers running on your host machi
 
 The discovery runs every 2 minutes. When a provider goes offline, it's automatically disabled. When it comes back, models are re-imported.
 
-**Ollama setup tip:** Ollama defaults to `127.0.0.1` which Docker containers can't reach. Set `OLLAMA_HOST=0.0.0.0`:
+**Ollama setup tip:** Ollama defaults to `127.0.0.1`, which Docker containers can't reach. Set `OLLAMA_HOST=0.0.0.0`:
 
 ```bash
 # If using systemd:
@@ -126,19 +128,33 @@ docker compose -f docker-compose.production.yml down -v && docker compose -f doc
 
 ## Core Capabilities
 
-### Crew — Agent Teams With Human Review
+### Crew: Agent Teams With Human Review
 
-Give a project a brief, hire a team of agents, and work the card pipeline. Every card comes back for your review before it ships — you always know what's being worked on and why. No black box.
+Give a project a brief, hire a team of agents, and work the card pipeline. Every card comes back for your review before it ships, so you always know what's being worked on and why. No black box.
+
+### Memory: Layered, Encrypted, and Actually Used
+
+Clara remembers you across conversations without being told twice. Facts are extracted automatically in the background, pulled back in only when relevant to the current conversation, and every entry is visible and editable in Settings. Nothing is stored that you can't see or delete.
+
+- **Pinned tier**: mark a fact as always-inject (allergies, hard constraints, how you want to be addressed). Pinned memories skip relevance scoring and never decay.
+- **Recall tier**: everything else, retrieved by embedding similarity against the current conversation so only what's relevant gets injected.
+- **Decay**: unused memories lose relevance over time and archive themselves automatically.
+- **Model-driven**: Clara calls `search_memory` and `add_memory` mid-conversation, the same way it calls any other tool.
+- **Encrypted at rest**: AES-256-GCM with a key derived per user via HKDF. Not even a ClaraVerse admin can read your memories.
+
+<p align="center">
+  <img src="docs/images/memory-pinned-settings.jpg" alt="Settings, Memory tab, showing pinned vs regular memories" width="80%" />
+</p>
 
 ### Skills in Chat
 
-Clara uses skills mid-conversation — context-aware tools that activate when needed. Search the web, generate images, analyze data, all without leaving the chat.
+Clara uses skills mid-conversation: context-aware tools that activate when needed. Search the web, generate images, analyze data, all without leaving the chat.
 
 <p align="center">
   <img src="docs/images/skills.png" alt="Skills in Chat" width="80%" />
 </p>
 
-### Channels — Telegram Integration
+### Channels: Telegram Integration
 
 Talk to Clara from Telegram when you're away from the app. Set up routines that run on a schedule and report back to your phone.
 
@@ -148,7 +164,7 @@ Talk to Clara from Telegram when you're away from the app. Set up routines that 
 
 ### 150+ Integrations & Tools Out of the Box
 
-Slack, GitHub, Jira, Google Sheets, Notion, Discord, Telegram, HubSpot, and many more — built in, no MCP required. All integrations are shared across Chat, Workflows, Crew, and Routines. Connect once, use everywhere.
+Slack, GitHub, Jira, Google Sheets, Notion, Discord, Telegram, HubSpot, and many more, built in, no MCP required. All integrations are shared across Chat, Workflows, Crew, and Routines. Connect once, use everywhere.
 
 <p align="center">
   <img src="docs/images/integration.png" alt="150+ Integrations" width="80%" />
@@ -156,7 +172,7 @@ Slack, GitHub, Jira, Google Sheets, Notion, Discord, Telegram, HubSpot, and many
 
 ### Interactive Artifacts
 
-Have all your creations in one place — images, charts, games, apps and more.
+Have all your creations in one place: images, charts, games, apps, and more.
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/d525fc67-6792-4083-9549-1d6b0e770e9e" width="80%" />
@@ -164,7 +180,7 @@ Have all your creations in one place — images, charts, games, apps and more.
 
 ### AI Docs
 
-Built-in tools for PPT, PDF, CSV and much more.
+Built-in tools for PPT, PDF, CSV, and much more.
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/ce881510-b7f2-4262-a3c9-f02e7c9e8e1f" width="80%" />
@@ -178,7 +194,7 @@ The AI asks you visual questions when it needs your input.
   <img src="https://github.com/user-attachments/assets/bbd5444d-2031-4193-ba6a-96ab7c96768d" width="80%" />
 </p>
 
-### Workflows — Visual Automation
+### Workflows: Visual Automation
 
 Drag-and-drop workflow builder with parallel execution, scheduling, and 200+ integrations. Describe what you need and let the LLM build the automation for you.
 
@@ -196,49 +212,41 @@ Use workflows with your web apps, schedule daily messages, automate repetitive t
 
 ---
 
+## ClaraVerse vs Open WebUI
+
+Open WebUI is the biggest self-hosted AI chat UI, and a good one. It has a bigger community, more vector database integrations, and a deeper document extraction pipeline than we do. We're not pretending otherwise. But it is a chat UI with tools bolted on. ClaraVerse is built differently, and it shows in three places.
+
+| | ClaraVerse | Open WebUI |
+| --- | --- | --- |
+| **License** | AGPL-3.0. Host it, white-label it, sell access to it. The only condition is that your modifications to the code stay open source. | BSD-3 with a branding clause added in v0.6.6. Once you pass 50 users in any 30-day window, you're required to keep "Open WebUI" branding visible unless you buy an enterprise license. |
+| **Multi-agent teams** | Crew ships in the box: hire a team of agents, work moves through a Kanban pipeline (Drafts, Queued, Working, Review, Done), and every card comes back to a human before it ships. | No equivalent. "Agents" are per-model system prompt and tool presets. Kanban-style multi-agent orchestration isn't part of the product. |
+| **Memory** | Layered by default. A pinned tier that never decays and always gets injected, a recall tier retrieved by embedding similarity, automatic decay and archival for stale entries, AES-256-GCM encryption per user. The model calls it as a tool, same as any other tool. | Manual notes, or an optional background job that extracts facts every few turns. The tiering and relevance logic you'd actually want exists as a third-party community Function you install yourself. No documented encryption model. |
+| **Workflow automation** | Visual drag-and-drop builder with parallel branches and scheduling. Describe what you want and the builder generates it for you. | Scheduled prompt runs and structured task lists. No visual node-based builder. |
+| **Local model support** | Auto-detects Ollama, LM Studio, and any OpenAI-compatible endpoint, including llama.cpp, on a 2-minute poll. | Auto-detects Ollama. |
+
+If you need enterprise SSO, SCIM provisioning, and a large plugin marketplace today, Open WebUI is more mature there. If you want agents that act like a team, memory that behaves like an actual memory system, and a license that doesn't ask you to pay once you succeed, that's what ClaraVerse is for.
+
+---
+
 ## Key Features
 
 | Feature                           | Description                                                                  |
 | --------------------------------- | ---------------------------------------------------------------------------- |
 | **Crew**                    | Agent teams with a card pipeline and human review                            |
+| **Memory System**           | Layered pinned/recall memory, AES-256-GCM encrypted, model-driven retrieval, automatic decay |
 | **Knowledge bases**         | Upload PDFs / MD / TXT / HTML to a project, search via hybrid vector + BM25 + reranker. Available in Chat and Workflows |
 | **Skills**                  | Context-aware tools that activate mid-conversation when needed               |
-| **Channels**                | Telegram integration — talk to Clara from your phone                        |
+| **Channels**                | Telegram integration, talk to Clara from your phone                        |
 | **Routines**                | Scheduled task sequences that report back via Telegram                       |
 | **Workflows**               | Drag-and-drop builder with parallel execution, scheduling, 200+ integrations |
-| **150+ Integrations**       | Slack, GitHub, Jira, Notion, and more — shared across Chat, Workflows, Crew, and Routines |
-| **Devices**                 | Connect all your machines — Clara reaches MCP on any of them remotely       |
-| **Clara Companion**         | Bridge local MCP servers to ClaraVerse over WebSocket from any machine       |
-| **Browser-Local Storage**   | Conversations stay in IndexedDB — zero-knowledge architecture               |
+| **150+ Integrations**       | Slack, GitHub, Jira, Notion, and more, shared across Chat, Workflows, Crew, and Routines |
+| **Devices**                 | Connect all your machines, Clara reaches MCP on any of them remotely       |
+| **Local-First Storage**     | Conversations live in IndexedDB by default, with optional encrypted cloud sync |
 | **Local AI Auto-Detection** | Ollama and LM Studio discovered and imported automatically                   |
-| **Multi-Provider**          | OpenAI, Anthropic, Google, Ollama, any OpenAI-compatible endpoint            |
-| **MCP Bridge**              | Native Model Context Protocol support for seamless tool connections          |
+| **Multi-Provider**          | OpenAI, Anthropic, Google, Ollama, llama.cpp, any OpenAI-compatible endpoint |
+| **MCP Bridge**              | Native Model Context Protocol support for tool connections                   |
 | **Interactive Prompts**     | AI asks clarifying questions mid-conversation with typed forms               |
-| **Memory System**           | Clara remembers context across conversations, auto-archives old memories     |
 | **BYOK**                    | Bring your own API keys or use free local models                             |
-
----
-
-## Clara Companion (MCP Bridge)
-
-Connect your local tools and filesystem to ClaraVerse via the Clara Companion CLI. It bridges local MCP servers to your ClaraVerse instance over WebSocket.
-
-<p align="center">
-  <img src="docs/images/claracompanion.png" alt="Clara Companion" width="80%" />
-</p>
-
-```bash
-# Install via the claraverse CLI
-claraverse companion
-
-# Login (choose default localhost:3000 or enter your server URL)
-clara-companion login
-
-# Start the bridge
-clara-companion
-```
-
-Or install manually from [GitHub Releases](https://github.com/claraverse-space/ClaraVerse/releases).
 
 ---
 
@@ -246,8 +254,8 @@ Or install manually from [GitHub Releases](https://github.com/claraverse-space/C
 
 | Option                                                                   | Description                                                          |
 | ------------------------------------------------------------------------ | -------------------------------------------------------------------- |
-| [**Cloud**](https://claraverse.space)                                 | Free hosted version — no setup required                             |
-| [**Self-Hosted**](#quick-start)                                       | Docker deployment (this repo) — full control on your infrastructure |
+| [**Cloud**](https://claraverse.space)                                 | Free hosted version, no setup required                             |
+| [**Self-Hosted**](#quick-start)                                       | Docker deployment (this repo), full control on your infrastructure |
 | [**Desktop**](https://github.com/claraverse-space/ClaraVerse-Desktop) | Standalone Electron app for Windows, macOS, Linux                    |
 
 ---
@@ -329,16 +337,16 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
 
 ## Community
 
-- [Discord](https://discord.com/invite/j633fsrAne) — Chat and support
-- [Twitter/X](https://x.com/claraversehq) — Updates
-- [GitHub Issues](https://github.com/claraverse-space/ClaraVerse/issues) — Bug reports
-- [GitHub Discussions](https://github.com/claraverse-space/ClaraVerse/discussions) — Feature requests
+- [Discord](https://discord.com/invite/j633fsrAne): Chat and support
+- [Twitter/X](https://x.com/claraversehq): Updates
+- [GitHub Issues](https://github.com/claraverse-space/ClaraVerse/issues): Bug reports
+- [GitHub Discussions](https://github.com/claraverse-space/ClaraVerse/discussions): Feature requests
 
 ---
 
 ## License
 
-**AGPL-3.0** — Free to use, modify, and host commercially. Modifications must be open-sourced. See [LICENSE](LICENSE) for details.
+**AGPL-3.0**: free to use, modify, and host commercially. Modifications must be open-sourced. No branding clause, no user cap, no enterprise tier required to remove our name from your product. See [LICENSE](LICENSE) for details.
 
 ---
 
