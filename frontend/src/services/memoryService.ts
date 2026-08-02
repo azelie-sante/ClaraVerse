@@ -5,6 +5,7 @@ export interface Memory {
   content: string;
   category: 'personal_info' | 'preferences' | 'context' | 'fact' | 'instruction';
   tags: string[];
+  pinned: boolean;
   score: number;
   access_count: number;
   last_accessed_at: string | null;
@@ -44,6 +45,7 @@ export interface UpdateMemoryRequest {
   content?: string;
   category?: 'personal_info' | 'preferences' | 'context' | 'fact' | 'instruction';
   tags?: string[];
+  pinned?: boolean;
 }
 
 export interface ListMemoriesParams {

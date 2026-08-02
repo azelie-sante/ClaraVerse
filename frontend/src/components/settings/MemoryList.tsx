@@ -6,6 +6,8 @@ import {
   Calendar,
   Filter,
   Loader2,
+  Pin,
+  PinOff,
   RefreshCw,
   Tag,
   Trash2,
@@ -105,6 +107,18 @@ export const MemoryList: React.FC = () => {
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Archive failed');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handlePin = async (m: Memory) => {
+    setBusyId(m.id);
+    try {
+      const updated = await memoryService.updateMemory(m.id, { pinned: !m.pinned });
+      setMemories(prev => prev.map(x => (x.id === m.id ? updated : x)));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Pin failed');
     } finally {
       setBusyId(null);
     }
@@ -211,6 +225,20 @@ export const MemoryList: React.FC = () => {
                 >
                   {meta.label}
                 </span>
+                {m.pinned && (
+                  <span
+                    className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full flex-shrink-0 flex items-center gap-1"
+                    style={{
+                      background: '#eab30822',
+                      color: '#eab308',
+                      border: '1px solid #eab30855',
+                    }}
+                    title="Pinned — always included in context, exempt from decay"
+                  >
+                    <Pin className="w-2.5 h-2.5" />
+                    Pinned
+                  </span>
+                )}
 
                 {/* Content + meta */}
                 <div className="flex-1 min-w-0">
@@ -240,6 +268,15 @@ export const MemoryList: React.FC = () => {
 
                 {/* Actions */}
                 <div className="flex items-center gap-1 flex-shrink-0">
+                  <button
+                    onClick={() => handlePin(m)}
+                    disabled={busy}
+                    title={m.pinned ? 'Unpin (allow decay/archival)' : 'Pin (always keep in context, never decays)'}
+                    className="p-1.5 rounded hover:bg-[var(--color-surface-hover)] disabled:opacity-50"
+                    style={{ color: m.pinned ? '#eab308' : 'var(--color-text-secondary)' }}
+                  >
+                    {m.pinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
+                  </button>
                   <button
                     onClick={() => handleArchive(m)}
                     disabled={busy}
