@@ -51,18 +51,28 @@ if [ -f "/app/config/searxng-settings.yml" ] && [ ! -f "/app/data/searxng-settin
     cp /app/config/searxng-settings.yml /app/data/searxng-settings.yml
 fi
 
-# Detect local AI providers
+# Detect local AI providers.
+#
+# --tries=1 matters as much as the timeout here. wget retries 20 times by
+# default, and --timeout bounds each attempt rather than the whole command, so
+# on a host whose firewall DROPs these ports (rather than refusing them) the
+# probe blocks for ~40s per provider and stalls container startup. One attempt
+# with a short timeout is all a presence check needs.
+probe_local_provider() {
+    wget -q --spider --timeout=2 --tries=1 "$1" 2>/dev/null
+}
+
 OLLAMA_STATUS="not detected"
 LMSTUDIO_STATUS="not detected"
 
 OLLAMA_URL="${OLLAMA_BASE_URL:-http://host.docker.internal:11434}"
-if wget -q --spider --timeout=2 "$OLLAMA_URL" 2>/dev/null; then
+if probe_local_provider "$OLLAMA_URL"; then
     OLLAMA_STATUS="detected at $OLLAMA_URL"
     echo "[init] Found Ollama at $OLLAMA_URL — models will be auto-imported"
 fi
 
 LMSTUDIO_URL="${LMSTUDIO_BASE_URL:-http://host.docker.internal:1234}"
-if wget -q --spider --timeout=2 "$LMSTUDIO_URL/v1/models" 2>/dev/null; then
+if probe_local_provider "$LMSTUDIO_URL/v1/models"; then
     LMSTUDIO_STATUS="detected at $LMSTUDIO_URL"
     echo "[init] Found LM Studio at $LMSTUDIO_URL — models will be auto-imported"
 fi
