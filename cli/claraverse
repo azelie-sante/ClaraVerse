@@ -132,6 +132,13 @@ services:
       - CLARAVERSE_VERSION=latest
       - SERVE_FRONTEND=true
       - ALLOWED_ORIGINS=*
+      # Local-provider auto-detection. The startup probe uses wget against
+      # these URLs; if a host firewall DROPs (rather than REJECTs) the port,
+      # wget blocks for its full retry budget and container startup stalls.
+      # Override these to a closed local port to skip detection instantly on
+      # hosts that don't run Ollama/LM Studio.
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - LMSTUDIO_BASE_URL=${LMSTUDIO_BASE_URL:-http://host.docker.internal:1234}
     depends_on:
       mysql:
         condition: service_healthy
@@ -427,6 +434,10 @@ cmd_init() {
         echo "    Upload PDFs/MD/TXT to any project's Knowledge tab."
         echo "    The embeddings sidecar downloads ~140MB of models on"
         echo "    first ingest (~60s); subsequent uploads are instant."
+        echo ""
+        echo -e "  ${BOLD}Clara Agent (terminal coding agent):${NC}"
+        echo "    claraverse agent install   - Build and link the 'claracli' command"
+        echo "    Then run 'claracli' and '/login claraverse' to connect it."
         echo ""
         echo -e "  ${BOLD}Commands:${NC}"
         echo "    claraverse status   - Check status"
@@ -756,6 +767,7 @@ cmd_help() {
     echo "  backup [file]    Create backup of all data"
     echo "  config           View or set configuration"
     echo "  shell            Open shell in app container"
+    echo "  agent            Install Clara Agent, the 'claracli' terminal coding agent"
     echo "  companion         Install & manage Clara Companion (MCP bridge)"
     echo "  clean            Remove all data and start fresh"
     echo "  uninstall        Remove ClaraVerse completely"
@@ -778,6 +790,70 @@ cmd_help() {
     echo ""
     echo "Documentation: https://github.com/${GITHUB_REPO}"
     echo ""
+}
+
+# Clara Agent: the terminal coding agent that ships in this repo under
+# clara-agent/. Unlike the old Companion (a prebuilt binary fetched from
+# GitHub Releases), Clara Agent is built from source alongside ClaraVerse, so
+# it always matches the checkout you are running.
+cmd_agent() {
+    local subcmd="${1:-install}"
+    local agent_dir=""
+
+    # Locate clara-agent/ relative to this script, so it works from a clone
+    # regardless of where the CLI itself was invoked from.
+    local script_dir
+    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    for candidate in "$script_dir/../clara-agent" "$PWD/clara-agent" "$PWD"; do
+        if [ -f "$candidate/packages/coding-agent/package.json" ]; then
+            agent_dir="$(cd "$candidate" && pwd)"
+            break
+        fi
+    done
+
+    case "$subcmd" in
+        install)
+            if [ -z "$agent_dir" ]; then
+                log_error "Could not find clara-agent/ next to this CLI."
+                echo "Clara Agent is built from the ClaraVerse repo. Clone it and run:"
+                echo "  git clone https://github.com/${GITHUB_REPO}.git"
+                echo "  cd ClaraVerse/clara-agent && npm run setup"
+                exit 1
+            fi
+            if ! command_exists npm; then
+                log_error "npm is required to build Clara Agent (Node.js 22+)."
+                echo "Install Node.js, then re-run: claraverse agent install"
+                exit 1
+            fi
+
+            log_info "Building Clara Agent from $agent_dir"
+            echo "This takes a few minutes on first run."
+            echo ""
+            if ( cd "$agent_dir" && npm run setup ); then
+                echo ""
+                log_success "Clara Agent installed"
+                echo ""
+                echo -e "  ${BOLD}Start it:${NC}      claracli"
+                echo -e "  ${BOLD}Connect it:${NC}    /login claraverse   (run inside the agent)"
+                echo ""
+            else
+                log_error "Clara Agent build failed"
+                echo "You can retry with: cd $agent_dir && npm run setup"
+                exit 1
+            fi
+            ;;
+        start)
+            if command_exists claracli; then
+                exec claracli "${@:2}"
+            fi
+            log_error "claracli is not installed. Run: claraverse agent install"
+            exit 1
+            ;;
+        *)
+            echo "Usage: claraverse agent [install|start]"
+            exit 1
+            ;;
+    esac
 }
 
 cmd_companion() {
@@ -906,6 +982,7 @@ main() {
         backup)     cmd_backup "$@" ;;
         config)     cmd_config "$@" ;;
         shell)      cmd_shell "$@" ;;
+        agent)      cmd_agent "$@" ;;
         companion)  cmd_companion "$@" ;;
         clean)      cmd_clean "$@" ;;
         uninstall)  cmd_uninstall "$@" ;;

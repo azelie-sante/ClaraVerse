@@ -49,6 +49,15 @@ Open **http://localhost:3000**, register your account (first user becomes admin)
 > **Have Ollama running?** ClaraVerse auto-detects it and imports all your models. No setup needed.
 > Make sure Ollama is listening on `0.0.0.0` (set `OLLAMA_HOST=0.0.0.0` in your Ollama config).
 
+### Want it in your terminal too?
+
+```bash
+claraverse agent install   # builds Clara Agent, puts `claracli` on your PATH
+claracli                   # then run /login claraverse to connect it
+```
+
+See [Clara Agent](#clara-agent-the-same-assistant-in-your-terminal) below.
+
 <details>
 <summary><b>Docker run (single command)</b></summary>
 
@@ -146,6 +155,19 @@ Clara remembers you across conversations without being told twice. Facts are ext
   <img src="docs/images/memory-pinned-settings.jpg" alt="Settings, Memory tab, showing pinned vs regular memories" width="80%" />
 </p>
 
+### Clara Agent: The Same Assistant, In Your Terminal
+
+[Clara Agent](clara-agent/) is a coding agent that runs in your terminal and ships in this repo. It reads, writes, and edits files and runs commands on your machine, using the same model and account as the web app.
+
+```bash
+claraverse agent install   # builds it and puts `claracli` on your PATH
+claracli                   # start it in any project directory
+```
+
+Then run `/login claraverse` inside the agent. You get a short code to confirm in the browser, and it picks up whichever model your account is configured with. The machine then shows up under **Settings → Devices**, where you can revoke it at any time.
+
+It talks directly to your configured model provider, so it keeps working even when the ClaraVerse server is down, and it makes no network calls to anything except your own instance and your own model provider.
+
 ### Skills in Chat
 
 Clara uses skills mid-conversation: context-aware tools that activate when needed. Search the web, generate images, analyze data, all without leaving the chat.
@@ -223,6 +245,7 @@ Open WebUI is the biggest self-hosted AI chat UI, and a good one. It has a bigge
 | **Memory** | Layered by default. A pinned tier that never decays and always gets injected, a recall tier retrieved by embedding similarity, automatic decay and archival for stale entries, AES-256-GCM encryption per user. The model calls it as a tool, same as any other tool. | Manual notes, or an optional background job that extracts facts every few turns. The tiering and relevance logic you'd actually want exists as a third-party community Function you install yourself. No documented encryption model. |
 | **Workflow automation** | Visual drag-and-drop builder with parallel branches and scheduling. Describe what you want and the builder generates it for you. | Scheduled prompt runs and structured task lists. No visual node-based builder. |
 | **Local model support** | Auto-detects Ollama, LM Studio, and any OpenAI-compatible endpoint, including llama.cpp, on a 2-minute poll. | Auto-detects Ollama. |
+| **Terminal agent** | Clara Agent ships in the repo. One command installs `claracli`, which shares your account, model, and device list with the web app. | No first-party terminal coding agent. |
 
 If you need enterprise SSO, SCIM provisioning, and a large plugin marketplace today, Open WebUI is more mature there. If you want agents that act like a team, memory that behaves like an actual memory system, and a license that doesn't ask you to pay once you succeed, that's what ClaraVerse is for.
 
@@ -233,6 +256,7 @@ If you need enterprise SSO, SCIM provisioning, and a large plugin marketplace to
 | Feature                           | Description                                                                  |
 | --------------------------------- | ---------------------------------------------------------------------------- |
 | **Crew**                    | Agent teams with a card pipeline and human review                            |
+| **Clara Agent**             | Terminal coding agent (`claracli`) sharing your account and model, ships in-repo |
 | **Memory System**           | Layered pinned/recall memory, AES-256-GCM encrypted, model-driven retrieval, automatic decay |
 | **Knowledge bases**         | Upload PDFs / MD / TXT / HTML to a project, search via hybrid vector + BM25 + reranker. Available in Chat and Workflows |
 | **Skills**                  | Context-aware tools that activate mid-conversation when needed               |

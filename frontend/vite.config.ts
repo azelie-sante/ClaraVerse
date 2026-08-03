@@ -20,8 +20,10 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        // Uses VITE_API_BASE_URL from .env, defaults to localhost for local dev
-        target: process.env.VITE_API_BASE_URL || 'http://localhost:3001',
+        // Dev-only proxy target. Deliberately NOT named VITE_*: Vite injects
+        // VITE_-prefixed vars into the client bundle, which would make the
+        // app call the backend on an absolute cross-origin URL and fail CORS.
+        target: process.env.VITE_DEV_PROXY_TARGET || 'http://localhost:3001',
         changeOrigin: true,
       },
     },
