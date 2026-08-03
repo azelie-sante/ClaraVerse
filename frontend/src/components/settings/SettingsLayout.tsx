@@ -9,6 +9,7 @@ export type SettingsTab =
   | 'credentials'
   | 'channels'
   | 'devices'
+  | 'cli'
   | 'usage'
   | 'privacy'
   | 'account';

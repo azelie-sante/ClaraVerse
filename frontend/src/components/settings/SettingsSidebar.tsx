@@ -10,6 +10,7 @@ import {
   MessageSquare,
   Radio,
   Smartphone,
+  Terminal,
 } from 'lucide-react';
 import { Sidebar, type NavItem, type FooterLink } from '@/components/ui/Sidebar';
 import type { SettingsTab } from './SettingsLayout';
@@ -79,6 +80,13 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
       icon: Smartphone,
       isActive: activeTab === 'devices',
       onClick: () => onTabChange('devices'),
+    },
+    {
+      id: 'cli',
+      label: 'CLI Agent',
+      icon: Terminal,
+      isActive: activeTab === 'cli',
+      onClick: () => onTabChange('cli'),
     },
     {
       id: 'usage',

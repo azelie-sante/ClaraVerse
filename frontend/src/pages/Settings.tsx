@@ -11,6 +11,7 @@ import {
   AccountSection,
   PrivacyPolicySidebar,
   DevicesSection,
+  ClaraCliSection,
 } from '@/components/settings';
 import type { SettingsTab } from '@/components/settings/SettingsLayout';
 import './Settings.css';
@@ -32,6 +33,7 @@ export const Settings = () => {
         'credentials',
         'channels',
         'devices',
+        'cli',
         'usage',
         'privacy',
         'account',
@@ -93,6 +95,13 @@ export const Settings = () => {
       {activeTab === 'devices' && (
         <section className="settings-section">
           <DevicesSection />
+        </section>
+      )}
+
+      {/* CLI Agent Tab */}
+      {activeTab === 'cli' && (
+        <section className="settings-section">
+          <ClaraCliSection />
         </section>
       )}
 

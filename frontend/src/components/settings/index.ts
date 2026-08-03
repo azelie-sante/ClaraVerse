@@ -11,6 +11,7 @@ export { UsageSection } from './UsageSection';
 export { CredentialsSection } from './CredentialsSection';
 export { ChannelsSection } from './ChannelsSection';
 export { DevicesSection } from './DevicesSection';
+export { ClaraCliSection } from './ClaraCliSection';
 export { PrivacySection } from './PrivacySection';
 export { AccountSection } from './AccountSection';
 export { PrivacyPolicySidebar } from './PrivacyPolicySidebar';

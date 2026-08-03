@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Smartphone, MoreVertical, Edit2, Trash2, RefreshCw, ExternalLink } from 'lucide-react';
+import { Smartphone, MoreVertical, Edit2, Trash2, RefreshCw } from 'lucide-react';
 import {
   listDevices,
   renameDevice,
@@ -142,16 +142,7 @@ export const DevicesSection = () => {
         <div className={styles.empty}>
           <Smartphone className={styles.emptyIcon} />
           <h3>No devices connected</h3>
-          <p>Use the MCP CLI to connect a device to your account.</p>
-          <a
-            href="https://docs.claraverse.ai/cli"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.docsLink}
-          >
-            <ExternalLink size={14} />
-            View documentation
-          </a>
+          <p>Run Clara Agent and use <code>/login claraverse</code> to connect this machine to your account.</p>
         </div>
       ) : (
         <div className={styles.deviceList}>
