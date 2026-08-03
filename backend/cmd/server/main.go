@@ -1440,6 +1440,10 @@ func main() {
 		// Device-authenticated model list (for desktop daemon)
 		api.Get("/agent/models", middleware.LocalAuthMiddleware(jwtAuth), modelHandler.List)
 
+		// Device-authenticated provider config (for Clara Agent, the local CLI coding agent)
+		agentProviderConfigHandler := handlers.NewAgentProviderConfigHandler(providerService, modelService, userService)
+		api.Get("/agent/provider-config", middleware.LocalAuthMiddleware(jwtAuth), agentProviderConfigHandler.GetProviderConfig)
+
 		// User preferences routes (requires authentication + userService)
 		if userPreferencesHandler != nil {
 			prefs := api.Group("/preferences", middleware.LocalAuthMiddleware(jwtAuth))
